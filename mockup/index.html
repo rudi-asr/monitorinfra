@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MonitorInfra — Agentic Infrastructure Operations Platform</title>
+<style>
+  :root{
+    --bg:#0b0e12; --surface:#10151c; --surface-2:#161d26; --line:#1e2833; --line-soft:#161f29;
+    --ink:#e9eef5; --ink-dim:#98a7b7; --ink-mute:#69798a;
+    --accent:#17b8a6; --accent-2:#0e8d80; --accent-ink:#03211d;
+    --ok:#3ddc97; --warn:#f2b544; --crit:#ef6b6b; --info:#5aa9f5;
+    --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --maxw:1120px;
+  }
+  html[data-theme="light"]{
+    --bg:#f6f7f9; --surface:#ffffff; --surface-2:#f1f3f6; --line:#dfe4ea; --line-soft:#eceff3;
+    --ink:#131820; --ink-dim:#4a5666; --ink-mute:#7b8798; --accent:#0f8f81; --accent-ink:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:var(--sans); background:var(--bg); color:var(--ink);
+    -webkit-font-smoothing:antialiased; line-height:1.55; font-size:16px;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px}
+
+  /* ---------- top bar ---------- */
+  .bar{position:sticky;top:0;z-index:20;background:color-mix(in oklab, var(--bg) 88%, transparent);
+       backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft)}
+  .bar-in{max-width:var(--maxw);margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:18px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+  .dot{width:9px;height:9px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px color-mix(in oklab,var(--accent) 22%,transparent)}
+  .bar .spacer{flex:1}
+  .bar small{color:var(--ink-mute);font-size:12px;font-family:var(--mono);letter-spacing:.02em}
+  .btn{font:inherit;font-size:13px;font-weight:600;padding:8px 14px;border-radius:7px;border:1px solid var(--line);
+       background:var(--surface);color:var(--ink);cursor:pointer;transition:.15s}
+  .btn:hover{border-color:color-mix(in oklab,var(--accent) 55%, var(--line))}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.primary:hover{background:#19c9b5}
+  .btn.tiny{padding:5px 9px;font-size:11px;font-family:var(--mono);font-weight:500;color:var(--ink-dim)}
+
+  /* ---------- hero ---------- */
+  header.hero{padding:78px 0 40px;border-bottom:1px solid var(--line-soft)}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:18px}
+  h1{font-size:clamp(34px,5.2vw,58px);line-height:1.04;letter-spacing:-.03em;font-weight:600;max-width:17ch}
+  h1 em{font-style:normal;color:var(--accent)}
+  .lede{margin-top:22px;font-size:18px;color:var(--ink-dim);max-width:62ch}
+  .pipeline{margin-top:34px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:12px}
+  .pipeline span{padding:5px 10px;border:1px solid var(--line);border-radius:5px;color:var(--ink-dim);background:var(--surface)}
+  .pipeline span.on{color:var(--accent-ink);background:var(--accent);border-color:var(--accent);font-weight:600}
+  .pipeline i{color:var(--ink-mute);font-style:normal;opacity:.6}
+  .hero-cta{margin-top:32px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .hint{font-size:12px;color:var(--ink-mute);font-family:var(--mono)}
+
+  /* ---------- section ---------- */
+  section{padding:64px 0;border-bottom:1px solid var(--line-soft)}
+  .s-head{display:grid;grid-template-columns:170px 1fr;gap:28px;margin-bottom:34px}
+  .s-num{font-family:var(--mono);font-size:12px;color:var(--ink-mute);letter-spacing:.1em;padding-top:6px}
+  h2{font-size:26px;letter-spacing:-.02em;font-weight:600;margin-bottom:12px}
+  .s-head p{color:var(--ink-dim);max-width:70ch}
+
+  /* not-is / is */
+  .contrast{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:10px;overflow:hidden}
+  .contrast > div{background:var(--surface);padding:26px 28px}
+  .contrast h3{font-size:13px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;color:var(--ink-mute)}
+  .contrast ul{list-style:none;display:flex;flex-direction:column;gap:11px}
+  .contrast li{font-size:15px;display:flex;gap:10px;align-items:flex-start}
+  .contrast .no li{color:var(--ink-mute);text-decoration:line-through;text-decoration-color:color-mix(in oklab,var(--crit) 60%,transparent)}
+  .contrast .yes li{color:var(--ink)}
+  .contrast li b{font-weight:600}
+  .mark{font-family:var(--mono);font-size:12px;flex:0 0 14px;padding-top:3px}
+  .contrast .no .mark{color:var(--crit)}
+  .contrast .yes .mark{color:var(--accent)}
+
+  /* engine list */
+  .engines{display:flex;flex-direction:column;border-top:1px solid var(--line-soft)}
+  .eng{display:grid;grid-template-columns:52px 1fr 1.15fr;gap:24px;padding:20px 4px;border-bottom:1px solid var(--line-soft);align-items:start}
+  .eng:hover{background:var(--surface)}
+  .eng .n{font-family:var(--mono);font-size:13px;color:var(--accent)}
+  .eng h4{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .eng h4 span{display:block;font-weight:400;font-size:12px;color:var(--ink-mute);font-family:var(--mono);margin-top:3px;letter-spacing:0}
+  .eng p{font-size:14.5px;color:var(--ink-dim)}
+  .eng p code{font-family:var(--mono);font-size:12.5px;color:var(--accent);background:color-mix(in oklab,var(--accent) 10%,transparent);padding:1px 5px;border-radius:4px}
+
+  /* mode table */
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-mute);font-weight:500}
+  td:first-child{font-family:var(--mono);color:var(--accent);white-space:nowrap;font-size:13px}
+  td{color:var(--ink-dim)}
+
+  /* data layer */
+  .files{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:10px}
+  .file{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:13px 14px}
+  .file b{display:block;font-family:var(--mono);font-size:12.5px;color:var(--ink);font-weight:500}
+  .file small{color:var(--ink-mute);font-size:12px;display:block;margin-top:5px;line-height:1.45}
+
+  /* agent team */
+  .team{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+  .agents{display:flex;flex-direction:column;gap:10px}
+  .agent{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:15px 16px}
+  .agent .top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .agent .top b{font-size:14.5px;font-weight:600}
+  .agent .st{margin-left:auto;font-family:var(--mono);font-size:10.5px;padding:2px 7px;border-radius:20px;
+             border:1px solid color-mix(in oklab,var(--ok) 45%,transparent);color:var(--ok);letter-spacing:.06em}
+  .agent p{font-size:13.5px;color:var(--ink-dim)}
+  .tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .tools span{font-family:var(--mono);font-size:11px;color:var(--ink-mute);border:1px solid var(--line);border-radius:4px;padding:2px 6px}
+
+  blockquote{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--accent);
+             border-radius:0 9px 9px 0;padding:18px 20px;font-family:var(--mono);font-size:13px;color:var(--ink-dim);line-height:1.75}
+  blockquote b{color:var(--ink);font-weight:500}
+  blockquote .k{color:var(--accent)}
+
+  footer{padding:44px 0 70px;color:var(--ink-mute);font-size:13px}
+  footer .row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  @media(max-width:860px){
+    .s-head,.contrast,.team{grid-template-columns:1fr;gap:18px}
+    .eng{grid-template-columns:36px 1fr;gap:14px}
+    .eng p{grid-column:2 / -1}
+    h1{max-width:none}
+  }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="bar">
+  <div class="bar-in">
+    <div class="brand"><span class="dot"></span> MonitorInfra</div>
+    <small>agentic infrastructure operations</small>
+    <span class="spacer"></span>
+    <button class="btn tiny" id="theme">tema terang</button>
+    <a class="btn" href="network.html">Tahap 1: Jaringan →</a>
+    <a class="btn primary" href="console.html">Buka mockup console →</a>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Observe · Discover · Detect · Correlate · Diagnose · Recommend · Approve · Remediate · Verify</div>
+    <h1>Infrastruktur Anda <em>mengawasi</em>, mendiagnosis, dan menjelaskan dirinya sendiri.</h1>
+    <p class="lede">
+      MonitorInfra adalah platform operasi infrastruktur berbasis agen: satu orchestrator yang mengoordinasikan
+      agen Network, Infrastructure, dan Security di atas data dari SNMP, NetFlow, exporter, syslog, IDS, dan hasil
+      vulnerability scan — lalu mengubah sinyal yang berserakan menjadi diagnosis yang bisa dipertanggungjawabkan.
+    </p>
+
+    <div class="pipeline" aria-label="alur operasi">
+      <span class="on">OBSERVE</span><i>→</i>
+      <span>DISCOVER</span><i>→</i>
+      <span>DETECT</span><i>→</i>
+      <span>CORRELATE</span><i>→</i>
+      <span>DIAGNOSE</span><i>→</i>
+      <span>RECOMMEND</span><i>→</i>
+      <span>APPROVE</span><i>→</i>
+      <span>REMEDIATE</span><i>→</i>
+      <span>VERIFY</span>
+    </div>
+
+    <div class="hero-cta">
+      <a class="btn primary" href="console.html">Lihat console (data contoh)</a>
+      <span class="hint">mockup statis · dark default · tanpa install</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-num">01 / POSITIONING</div>
+      <div>
+        <h2>Bukan monitoring yang ditempeli chatbot.</h2>
+        <p>Yang dijual bukan kumpulan tool, melainkan alur kerja terorkestrasi yang memilih playbook dan tool
+           yang tepat sesuai kondisi — dan berhenti untuk meminta persetujuan manusia sebelum mengubah apa pun.</p>
+      </div>
+    </div>
+
+    <div class="contrast">
+      <div class="no">
+        <h3>Bukan</h3>
+        <ul>
+          <li><span class="mark">✕</span><span>Zabbix + AI</span></li>
+          <li><span class="mark">✕</span><span>Nmap + dashboard</span></li>
+          <li><span class="mark">✕</span><span>SIEM versi kecil</span></li>
+          <li><span class="mark">✕</span><span>Nessus + monitoring</span></li>
+          <li><span class="mark">✕</span><span>Auto-remediation tanpa jejak audit</span></li>
+        </ul>
+      </div>
+      <div class="yes">
+        <h3>Melainkan</h3>
+        <ul>
+          <li><span class="mark">✓</span><span><b>Agentic.</b> Tiga agen spesialis + orchestrator, bukan satu skrip besar.</span></li>
+          <li><span class="mark">✓</span><span><b>Playbook-driven.</b> <code>/diagnose-*</code> dan <code>/investigate-*</code> dipilih berdasarkan kondisi.</span></li>
+          <li><span class="mark">✓</span><span><b>Sadar dependensi.</b> Insiden dibaca sebagai graf, bukan satu server.</span></li>
+          <li><span class="mark">✓</span><span><b>Observe → Approve → Verify.</b> Rekomendasi dulu, eksekusi setelah disetujui.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-num">02 / ENGINE</div>
+      <div>
+        <h2>Tujuh engine, satu rantai penalaran.</h2>
+        <p>Tiap engine punya satu tanggung jawab dan menyerahkan konteksnya ke engine berikutnya. Tidak ada engine
+           yang "menebak" — tiap kesimpulan membawa bukti mentah yang bisa dibuka kembali.</p>
+      </div>
+    </div>
+
+    <div class="engines">
+      <div class="eng">
+        <div class="n">01</div>
+        <div><h4>Asset Discovery<span>asset → ip → port → service → dependency</span></h4></div>
+        <p>Bukan discovery pentest. Tujuannya menjawab satu pertanyaan: <b>saya punya infrastruktur apa saja</b> —
+           router, switch, firewall, server, VM, container, database, web, Kubernetes, storage — beserta topologinya.</p>
+      </div>
+      <div class="eng">
+        <div class="n">02</div>
+        <div><h4>Monitoring<span>network · server · application</span></h4></div>
+        <p>Latency, packet loss, bandwidth, error interface, availability; CPU, RAM, disk, load, process; HTTP latency,
+           error rate. Sumber: SNMP, NetFlow/sFlow, exporter, syslog, Prometheus. <b>Dashboard hanya tempat melihat</b> —
+           bukan produknya.</p>
+      </div>
+      <div class="eng">
+        <div class="n">03</div>
+        <div><h4>Security<span>deteksi + assessment, bukan eksploitasi</span></h4></div>
+        <p>Vulnerability, konfigurasi, autentikasi, trafik, firewall, IDS/IPS, log, sertifikat, open port.
+           Contoh keluaran: <code>SSH password auth aktif</code>, <code>TLS kadaluarsa 12 hari</code>,
+           <code>nginx punya CVE diketahui</code>.</p>
+      </div>
+      <div class="eng">
+        <div class="n">04</div>
+        <div><h4>Correlation<span>pembeda utama</span></h4></div>
+        <p>Monitoring tradisional memunculkan empat alert terpisah. MonitorInfra menyatukannya menjadi satu hipotesis
+           berskor: <code>network_anomaly ∧ failed_auth ∧ cpu_rise ∧ new_process → possible security incident</code>.</p>
+      </div>
+      <div class="eng">
+        <div class="n">05</div>
+        <div><h4>Diagnosis<span>playbook, bukan tebakan</span></h4></div>
+        <p>Memilih playbook sesuai gejala: <code>/diagnose-high-cpu</code>, <code>/diagnose-packet-loss</code>,
+           <code>/diagnose-disk-full</code>, <code>/investigate-bruteforce</code>, <code>/investigate-cve-exposure</code>.
+           Setiap langkah playbook adalah perintah nyata dengan keluaran nyata.</p>
+      </div>
+      <div class="eng">
+        <div class="n">06</div>
+        <div><h4>Remediation<span>observe → approve → verify</span></h4></div>
+        <p>Dari temuan ke usulan tindakan yang bisa dipilih manusia: <b>[Apply] [Dry run] [Ignore] [Buat tiket]</b>.
+           Tidak ada eksekusi otomatis tanpa persetujuan, dan setiap eksekusi punya langkah verifikasi.</p>
+      </div>
+      <div class="eng">
+        <div class="n">07</div>
+        <div><h4>Infrastructure Intelligence<span>graf yang membuat insiden masuk akal</span></h4></div>
+        <p>Menyimpan rantai <code>asset → service → dependency → traffic → event → security → incident</code>.
+           Kalau postgres-01 bermasalah, sistem tahu api-01 bergantung padanya dan web-01 bergantung pada api-01 —
+           sehingga dampaknya langsung terlihat sebagai blast radius, bukan satu baris alert.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-num">03 / MODE</div>
+      <div>
+        <h2>Mode kerja mengubah apa yang dianggap penting.</h2>
+        <p>Bukan filter kosmetik: mode mengubah bobot korelasi, playbook yang diusulkan, dan tampilan yang muncul lebih dulu.</p>
+      </div>
+    </div>
+    <table>
+      <thead><tr><th>Mode</th><th>Fokus</th><th>Contoh playbook</th></tr></thead>
+      <tbody>
+        <tr><td>AUTO</td><td>Mode menyesuaikan diri dengan kondisi yang sedang terjadi</td><td>apa pun yang paling relevan saat itu</td></tr>
+        <tr><td>NOC</td><td>Availability, latency, packet loss, bandwidth, kesehatan device</td><td>/diagnose-network-latency, /diagnose-service-down</td></tr>
+        <tr><td>SECURITY</td><td>Ancaman, anomali, vulnerability, autentikasi, keamanan jaringan</td><td>/investigate-bruteforce, /investigate-new-service</td></tr>
+        <tr><td>INCIDENT</td><td>Timeline, root cause, aset terdampak, bukti, IOC, remediasi</td><td>/diagnose-* + korelasi lintas agen</td></tr>
+        <tr><td>CAPACITY</td><td>Tren CPU/RAM/bandwidth/storage dan prakiraan</td><td>/capacity-forecast</td></tr>
+        <tr><td>CHANGE</td><td>Dampak perubahan sebelum dan sesudah dieksekusi</td><td>dry run + approval</td></tr>
+        <tr><td>AUDIT</td><td>Jejak keputusan: siapa menyetujui apa, atas dasar bukti mana</td><td>riwayat eksekusi + verifikasi</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="s-head">
+      <div class="s-num">04 / TIM &amp; DATA</div>
+      <div>
+        <h2>Agen spesialis di atas lapisan data yang bisa diaudit.</h2>
+        <p>Agen tidak membaca angka mentah. Mereka membaca ontology: hubungan antar aset, port, layanan, CVE, dan pola
+           insiden yang sudah terbukti di lingkungan ini.</p>
+      </div>
+    </div>
+
+    <div class="team">
+      <div class="agents">
+        <div class="agent">
+          <div class="top"><b>Network Agent</b><span class="st">AKTIF</span></div>
+          <p>Membaca SNMP, ICMP, NetFlow/sFlow, syslog, DNS pada perangkat jaringan dan jalur WAN.</p>
+          <div class="tools"><span>snmp</span><span>icmp</span><span>netflow</span><span>syslog</span><span>dns</span></div>
+        </div>
+        <div class="agent">
+          <div class="top"><b>Infrastructure Agent</b><span class="st">AKTIF</span></div>
+          <p>Membaca Linux/Windows, container, Kubernetes, hypervisor, cloud, dan dependensi antar layanan.</p>
+          <div class="tools"><span>node exporter</span><span>docker</span><span>k8s</span><span>proxmox</span><span>cloud</span></div>
+        </div>
+        <div class="agent">
+          <div class="top"><b>Security Agent</b><span class="st">AKTIF</span></div>
+          <p>Membaca IDS, hasil vulnerability scan, konfigurasi, sertifikat, log autentikasi, dan peta port terbuka.</p>
+          <div class="tools"><span>ids</span><span>vuln scan</span><span>config</span><span>auth log</span><span>tls</span></div>
+        </div>
+        <blockquote>
+          <span class="k">Web server lambat.</span><br>
+          Network Agent &nbsp;→ packet loss 2.4%<br>
+          Infra Agent &nbsp;&nbsp;&nbsp;&nbsp;→ CPU normal, RAM normal<br>
+          Security Agent &nbsp;→ inbound connection +340%<br>
+          Correlator &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;→ kemungkinan peristiwa jaringan, bukan kehabisan resource<br>
+          <b>Incident Agent → web-01 terdampak; api-01 ikut naik latensinya.</b>
+        </blockquote>
+      </div>
+
+      <div class="files">
+        <div class="file"><b>asset_ontology.json</b><small>Jenis aset, atribut, dan aturan pengelompokannya.</small></div>
+        <div class="file"><b>service_dependencies.json</b><small>Siapa bergantung pada siapa — dasar blast radius.</small></div>
+        <div class="file"><b>port_service_map.json</b><small>Port → protokol → layanan → platform.</small></div>
+        <div class="file"><b>metric_patterns.json</b><small>Pola metrik yang bermakna, bukan sekadar ambang batas.</small></div>
+        <div class="file"><b>incident_patterns.json</b><small>Pola insiden yang pernah terjadi dan penyebabnya.</small></div>
+        <div class="file"><b>security_patterns.json</b><small>Pola anomali, brute force, port scan, trafik menyimpang.</small></div>
+        <div class="file"><b>cve_asset_correlations.json</b><small>CVE dipetakan ke aset yang benar-benar terpapar.</small></div>
+        <div class="file"><b>network_baselines.json</b><small>Garis dasar per jalur, per jam, per hari.</small></div>
+        <div class="file"><b>remediation_playbooks.json</b><small>Tindakan yang aman, dampaknya, dan cara verifikasinya.</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap row">
+    <a class="btn primary" href="console.html">Buka mockup console →</a>
+    <span>MonitorInfra — mockup konsep, data contoh, belum terhubung ke sistem nyata.</span>
+  </div>
+</footer>
+
+<script>
+  const root=document.documentElement, t=document.getElementById('theme');
+  const store={ get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+                set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}} };
+  const saved=store.get('mi-theme');
+  if(saved) root.dataset.theme=saved;
+  const sync=()=>t.textContent = root.dataset.theme==='dark' ? 'tema terang' : 'tema gelap';
+  sync();
+  t.addEventListener('click',()=>{
+    root.dataset.theme = root.dataset.theme==='dark' ? 'light' : 'dark';
+    store.set('mi-theme', root.dataset.theme); sync();
+  });
+</script>
+</body>
+</html>

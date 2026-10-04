@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MonitorInfra — Tahap 1: Jaringan</title>
+<style>
+  :root{
+    --bg:#0b0e12; --surface:#10151c; --surface-2:#151c25; --surface-3:#1a2330;
+    --line:#202b37; --line-soft:#171f29;
+    --ink:#e9eef5; --ink-dim:#9aa8b8; --ink-mute:#66768a;
+    --accent:#17b8a6; --accent-ink:#04211d;
+    --ok:#3ddc97; --warn:#f2b544; --crit:#ef6b6b; --info:#5aa9f5;
+    --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --r:8px;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f7f9; --surface:#fff; --surface-2:#f1f4f7; --surface-3:#e7edf2;
+    --line:#dde4eb; --line-soft:#eaeff4; --ink:#111823; --ink-dim:#4a5766; --ink-mute:#7b8798; --accent-ink:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;
+       -webkit-font-smoothing:antialiased;overflow:hidden}
+  button,input,select{font:inherit;color:inherit}
+  button{background:none;border:none;cursor:pointer}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#26313d;border-radius:9px;border:2px solid var(--bg)}
+
+  /* ---------- top ---------- */
+  .top{height:56px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);
+       background:var(--surface)}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-.01em}
+  .brand .sq{width:10px;height:10px;border-radius:2px;background:var(--accent)}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--accent);
+       border:1px solid color-mix(in oklab,var(--accent) 40%,var(--line));border-radius:5px;padding:3px 8px}
+  .grow{flex:1}
+  .chip{font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);border:1px solid var(--line);
+        border-radius:5px;padding:4px 9px;display:flex;align-items:center;gap:7px}
+  .chip .live{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* ---------- nav ---------- */
+  .shell{display:grid;grid-template-columns:190px 1fr;height:calc(100vh - 56px)}
+  .rail{border-right:1px solid var(--line);background:var(--surface);padding:12px 8px}
+  .rail button{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:6px;
+        font-size:13.5px;color:var(--ink-dim);text-align:left;margin-bottom:2px}
+  .rail button:hover{background:var(--surface-2);color:var(--ink)}
+  .rail button.on{background:var(--surface-3);color:var(--ink);font-weight:500}
+  .rail button.on .ic{color:var(--accent)}
+  .rail .ic{width:16px;font-family:var(--mono);font-size:12px;color:var(--ink-mute)}
+  .rail .n{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+  .rail .rule{margin:14px 10px 12px;padding-top:12px;border-top:1px solid var(--line-soft);
+        font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);line-height:1.7}
+  main{overflow-y:auto;padding:18px 20px 50px}
+
+  /* ---------- summary strip ---------- */
+  .verdict{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--surface);
+        border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:16px}
+  .verdict .vmain{font-size:19px;font-weight:600;letter-spacing:-.01em;line-height:1.35}
+  .verdict .vsub{font-size:13px;color:var(--ink-dim);margin-top:5px}
+  .counts{margin-left:auto;display:flex;gap:22px}
+  .counts .c{text-align:right}
+  .counts .c b{display:block;font-family:var(--mono);font-size:24px;font-weight:500;line-height:1.1}
+  .counts .c span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-mute)}
+  .counts .c.ok b{color:var(--ok)} .counts .c.warn b{color:var(--warn)} .counts .c.crit b{color:var(--crit)}
+
+  /* ---------- toolbar ---------- */
+  .tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:13px}
+  .inp{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 11px;font-size:13px;
+       color:var(--ink);min-width:210px}
+  .inp::placeholder{color:var(--ink-mute)}
+  select.inp{min-width:auto;padding-right:8px}
+  .tools .lbl{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);letter-spacing:.08em}
+
+  /* ---------- table ---------- */
+  .grp{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;color:var(--ink-mute);padding:0 2px 9px;
+       display:flex;align-items:center;gap:9px}
+  .grp .bar{flex:1;height:1px;background:var(--line-soft)}
+  table{width:100%;border-collapse:collapse;margin-bottom:22px;background:var(--surface);border:1px solid var(--line);
+        border-radius:var(--r);overflow:hidden}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-mute);text-transform:uppercase;
+     text-align:left;padding:10px 13px;border-bottom:1px solid var(--line);font-weight:500;white-space:nowrap}
+  td{padding:11px 13px;border-bottom:1px solid var(--line-soft);vertical-align:middle;font-size:13.5px}
+  tbody tr{cursor:pointer}
+  tbody tr:hover td{background:var(--surface-2)}
+  tbody tr.on td{background:var(--surface-3)}
+  tbody tr:last-child td{border-bottom:none}
+  .dev{display:flex;align-items:center;gap:10px}
+  .dev .nm{font-weight:500}
+  .dev .ty{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute)}
+  .dotst{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 8px}
+  .dotst.warn{background:var(--warn)} .dotst.crit{background:var(--crit)}
+  .num{font-family:var(--mono);font-size:13px}
+  .st{font-size:12.5px;display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .st.ok{color:var(--ok)} .st.warn{color:var(--warn)} .st.crit{color:var(--crit)}
+  .empty{padding:26px;text-align:center;color:var(--ink-mute);font-size:13px}
+
+  /* ---------- split + detail ---------- */
+  .split{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+  .card .ct{font-family:var(--mono);font-size:10px;letter-spacing:.11em;color:var(--ink-mute);
+        padding:11px 14px;border-bottom:1px solid var(--line-soft)}
+  .pane{padding:14px}
+  .pane h3{font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .pane .sub{font-family:var(--mono);font-size:11px;color:var(--ink-mute);margin:4px 0 14px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:12.5px}
+  .kv span:nth-child(odd){color:var(--ink-mute)}
+  .kv span:nth-child(even){font-family:var(--mono);font-size:12px}
+  .sec{margin-top:15px;padding-top:13px;border-top:1px solid var(--line-soft)}
+  .sec .h{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--ink-mute);margin-bottom:9px}
+  .iface{display:grid;grid-template-columns:1fr auto;gap:6px 10px;font-size:12.5px;margin-bottom:9px}
+  .iface .n{font-family:var(--mono);font-size:11.5px}
+  .iface .n i{font-style:normal;color:var(--ink-mute);font-size:10.5px;margin-left:6px}
+  .minibar{grid-column:1 / -1;height:5px;border-radius:3px;background:var(--surface-3);overflow:hidden}
+  .minibar i{display:block;height:100%;background:var(--accent)}
+  .minibar i.warn{background:var(--warn)} .minibar i.down{background:var(--crit)}
+  .evline{display:grid;grid-template-columns:58px 1fr;gap:9px;font-size:12.5px;color:var(--ink-dim);
+        padding:6px 0;border-bottom:1px solid var(--line-soft)}
+  .evline:last-child{border-bottom:none}
+  .evline b{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--ink-mute)}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:15px}
+  .btn{font-size:12.5px;padding:7px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);
+       color:var(--ink-dim);font-weight:500}
+  .btn:hover{border-color:color-mix(in oklab,var(--accent) 55%,var(--line));color:var(--ink)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+  .btn.pri:hover{background:#19c9b5}
+  .btn.sm{font-size:11.5px;padding:4px 9px;font-family:var(--mono)}
+  .note{font-size:12.5px;color:var(--ink-dim);background:var(--bg);border:1px solid var(--line-soft);
+        border-radius:6px;padding:9px 11px;margin-top:12px;line-height:1.6}
+  .note b{color:var(--accent);font-family:var(--mono);font-size:11.5px;display:block;margin-bottom:4px}
+
+  /* ---------- discovery ---------- */
+  .disc{display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start}
+  .field{margin-bottom:13px}
+  .field label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--ink-mute);
+        margin-bottom:6px}
+  .field .inp{width:100%}
+  .chk{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line-soft)}
+  .chk:last-child{border-bottom:none}
+  .chk input{margin-top:3px;accent-color:var(--accent);width:15px;height:15px}
+  .chk .t{font-size:13px}
+  .chk .d{font-size:11.5px;color:var(--ink-mute);margin-top:2px;line-height:1.5;display:block}
+  .dd{font-size:11.5px;color:var(--ink-mute);padding:7px 0 0;line-height:1.5}
+  .term{background:#080b0f;border:1px solid var(--line);border-radius:var(--r);padding:13px 14px}
+  .term .th{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:10.5px;color:#7c8b9c;
+        padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid #18202a}
+  .term pre{font-family:var(--mono);font-size:11.5px;line-height:1.8;color:#c6d2de;white-space:pre-wrap;
+        max-height:280px;overflow-y:auto}
+  .term pre .t{color:#5c6b7d} .term pre .k{color:#5aa9f5} .term pre .ok{color:#3ddc97}
+  .term pre .w{color:#f2b544} .term pre .c{color:#ef6b6b}
+  .how{display:flex;flex-direction:column;gap:0}
+  .how .r{display:grid;grid-template-columns:22px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .how .r:last-child{border-bottom:none}
+  .how .k{font-family:var(--mono);font-size:11px;color:var(--accent);padding-top:2px}
+  .how b{font-size:13.5px;font-weight:500}
+  .how .d{font-size:12.5px;color:var(--ink-dim);margin-top:3px;line-height:1.6}
+  .how .lim{font-size:11.5px;color:var(--ink-mute);margin-top:4px}
+  .found .r{display:grid;grid-template-columns:1fr auto;gap:12px;padding:11px 0;border-bottom:1px solid var(--line-soft)}
+  .found .r:last-child{border-bottom:none}
+  .found .mono{font-family:var(--mono);font-size:12px}
+  .found .why{font-size:12px;color:var(--ink-mute);margin-top:3px}
+  .pill{font-family:var(--mono);font-size:10.5px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);
+        color:var(--ink-dim);white-space:nowrap}
+
+  /* ---------- map ---------- */
+  .mapwrap{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+  svg.map{width:100%;height:auto;display:block}
+  .n{cursor:pointer}
+  .n rect{fill:var(--surface-2);stroke:var(--line);stroke-width:1.3;rx:8}
+  .n .t1{fill:var(--ink);font-size:12px;font-family:var(--mono)}
+  .n .t2{fill:var(--ink-mute);font-size:9.5px;font-family:var(--mono)}
+  .n:hover rect{stroke:var(--accent)}
+  .n.on rect{fill:color-mix(in oklab,var(--accent) 16%,var(--surface-2));stroke:var(--accent)}
+  .n.warn rect{stroke:color-mix(in oklab,var(--warn) 60%,var(--line))}
+  .n.down rect{stroke:var(--crit);stroke-dasharray:5 4}
+  .n .dot{fill:var(--ok)} .n.warn .dot{fill:var(--warn)} .n.down .dot{fill:var(--crit)}
+  .lk{stroke:#26313e;stroke-width:1.6;fill:none}
+  .lk.on{stroke:var(--accent);stroke-width:2.4}
+  .lk.down{stroke:var(--crit);stroke-dasharray:6 5;stroke-width:1.6}
+  .lklabel{fill:var(--ink-mute);font-size:9px;font-family:var(--mono)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);
+        padding:11px 14px;border-top:1px solid var(--line-soft)}
+  .legend i{font-style:normal;display:inline-flex;align-items:center;gap:6px}
+  .legend .d{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+  .legend .d.warn{background:var(--warn)} .legend .d.crit{background:var(--crit)}
+
+  .toast{position:fixed;right:18px;bottom:18px;background:var(--surface);border:1px solid var(--accent);
+        border-radius:8px;padding:11px 14px;font-size:12.5px;max-width:340px;opacity:0;transform:translateY(8px);
+        transition:.2s;pointer-events:none;box-shadow:0 12px 34px rgba(0,0,0,.45);z-index:60}
+  .toast.on{opacity:1;transform:none}
+  .toast b{display:block;font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:3px}
+  @media(max-width:1180px){ .split,.disc,.mapwrap{grid-template-columns:1fr} }
+  @media(max-width:860px){ .shell{grid-template-columns:62px 1fr} .rail button span.tx{display:none} }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><span class="sq"></span> MonitorInfra</div>
+  <span class="tag">TAHAP 1 · JARINGAN</span>
+  <div class="grow"></div>
+  <span class="chip"><span class="live"></span> POLLING AKTIF · 10 s</span>
+  <span class="chip" id="clock">--:--:-- WIB</span>
+</div>
+
+<div class="shell">
+  <nav class="rail" id="rail"></nav>
+  <main id="view"></main>
+</div>
+
+<div class="toast" id="toast"><b>OK</b><span id="toastmsg"></span></div>
+
+<script>
+/* ============================================================
+   MonitorInfra — Tahap 1: pemantauan perangkat jaringan
+   Semua data contoh.
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const store = { get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+                set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}} };
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+const DEVICES = [
+  {id:'rt-jkt-core-01', nm:'rt-jkt-core-01', ty:'Router', ip:'10.20.0.1', site:'Jakarta', lat:1.2, loss:0,
+   ifu:2, ift:2, up:'312 hari', st:'ok', vend:'MikroTik', mdl:'CCR2004-1G-12S+2XS', fw:'RouterOS 7.16',
+   snmp:'v2c', src:'ICMP + SNMP sysDescr', ev:[['09:12','Konfigurasi tidak berubah 30 hari'],['03:00','Backup konfigurasi tersimpan']]},
+  {id:'fw-jkt-01', nm:'fw-jkt-01', ty:'Firewall', ip:'10.20.0.2', site:'Jakarta', lat:0.9, loss:0,
+   ifu:3, ift:3, up:'198 hari', st:'ok', vend:'Fortinet', mdl:'FortiGate 100F', fw:'v7.4.4',
+   snmp:'v2c', src:'ICMP + SNMP sysDescr', ev:[['20:41','1.024 percobaan scan ditolak'],['11:02','Sesi aktif puncak 4.812']]},
+  {id:'sw-jkt-core-01', nm:'sw-jkt-core-01', ty:'Switch', ip:'10.20.0.10', site:'Jakarta', lat:0.6, loss:0,
+   ifu:24, ift:24, up:'286 hari', st:'ok', vend:'Cisco', mdl:'Catalyst 9300-24T', fw:'IOS-XE 17.12',
+   snmp:'v3', src:'ICMP + SNMP v3 + LLDP', ev:[['20:40','Tabel MAC 612 entri, 0 perangkat baru'],['18:12','Uplink ke dist-01 normal']]},
+  {id:'sw-jkt-dist-01', nm:'sw-jkt-dist-01', ty:'Switch', ip:'10.20.0.11', site:'Jakarta', lat:0.8, loss:0,
+   ifu:12, ift:12, up:'286 hari', st:'ok', vend:'Cisco', mdl:'Catalyst 9200-24P', fw:'IOS-XE 17.12',
+   snmp:'v3', src:'LLDP (tetangga core)', ev:[['17:30','2 perangkat baru terdeteksi via LLDP']]},
+  {id:'sw-jkt-acc-01', nm:'sw-jkt-acc-01', ty:'Switch', ip:'10.20.1.21', site:'Jakarta · Lt 2', lat:1.1, loss:0,
+   ifu:22, ift:24, up:'155 hari', st:'ok', vend:'Cisco', mdl:'Catalyst 1000-24T', fw:'IOS 15.2',
+   snmp:'v3', src:'LLDP (tetangga dist-01)', ev:[['08:41','Port Gi0/14 naik']]},
+  {id:'sw-jkt-acc-02', nm:'sw-jkt-acc-02', ty:'Switch', ip:'10.20.1.22', site:'Jakarta · Lt 2', lat:14.8, loss:2.4,
+   ifu:24, ift:24, up:'155 hari', st:'warn', vend:'Cisco', mdl:'Catalyst 1000-24T', fw:'IOS 15.2',
+   snmp:'v3', src:'LLDP (tetangga dist-01)',
+   ev:[['20:41','CRC error naik 37 dalam 15 menit pada Gi0/1'],['20:40','Hilang paket 2.4%'],['19:58','Latensi mulai naik dari 1.1 ms']]},
+  {id:'sw-jkt-acc-03', nm:'sw-jkt-acc-03', ty:'Switch', ip:'10.20.1.23', site:'Jakarta · Lt 3', lat:1.0, loss:0,
+   ifu:18, ift:24, up:'155 hari', st:'ok', vend:'Cisco', mdl:'Catalyst 1000-24T', fw:'IOS 15.2',
+   snmp:'v3', src:'LLDP (tetangga dist-01)', ev:[['12:04','3 access point aktif terhubung']]},
+  {id:'sw-bdg-acc-01', nm:'sw-bdg-acc-01', ty:'Switch', ip:'10.40.1.20', site:'Bandung', lat:9.4, loss:0.2,
+   ifu:11, ift:24, up:'96 hari', st:'ok', vend:'Cisco', mdl:'Catalyst 1000-16T', fw:'IOS 15.2',
+   snmp:'v3', src:'LLDP (tetangga rt-branch-bdg)', ev:[['14:20','Uplink ke router cabang normal']]},
+  {id:'rt-branch-bdg', nm:'rt-branch-bdg', ty:'Router', ip:'10.40.0.1', site:'Bandung', lat:null, loss:null,
+   ifu:0, ift:4, up:'—', st:'down', vend:'MikroTik', mdl:'RB4011iGS+', fw:'RouterOS 7.11',
+   snmp:'v2c', src:'terakhir terlihat 12 menit lalu', since:'20:29 WIB', last:'20:29 WIB',
+   ev:[['20:29','Tidak merespons ICMP (3 siklus berturut)'],['20:29','SNMP timeout'],['20:12','Latensi naik ke 42 ms dari 9 ms']]},
+  {id:'ap-jkt-lt2-01', nm:'ap-jkt-lt2-01', ty:'Access Point', ip:'10.20.2.31', site:'Jakarta · Lt 2', lat:2.1, loss:0,
+   ifu:1, ift:1, up:'88 hari', st:'ok', vend:'Ubiquiti', mdl:'U6-Pro', fw:'6.6.55',
+   snmp:'v2c', src:'ICMP + LLDP (kt. sw-jkt-acc-03)', ev:[['13:40','38 klien aktif']]},
+  {id:'ap-jkt-lt2-02', nm:'ap-jkt-lt2-02', ty:'Access Point', ip:'10.20.2.32', site:'Jakarta · Lt 2', lat:2.4, loss:0,
+   ifu:1, ift:1, up:'88 hari', st:'ok', vend:'Ubiquiti', mdl:'U6-Pro', fw:'6.6.55',
+   snmp:'v2c', src:'ICMP + LLDP (kt. sw-jkt-acc-03)', ev:[['13:40','27 klien aktif']]},
+  {id:'ap-jkt-lt3-01', nm:'ap-jkt-lt3-01', ty:'Access Point', ip:'10.20.2.41', site:'Jakarta · Lt 3', lat:2.8, loss:0,
+   ifu:1, ift:1, up:'88 hari', st:'ok', vend:'Ubiquiti', mdl:'U6-Lite', fw:'6.6.55',
+   snmp:'v2c', src:'ICMP + LLDP (kt. sw-jkt-acc-03)', ev:[['13:40','21 klien aktif']]},
+  {id:'ap-bdg-lt1-01', nm:'ap-bdg-lt1-01', ty:'Access Point', ip:'10.40.2.11', site:'Bandung', lat:10.2, loss:0.2,
+   ifu:1, ift:1, up:'61 hari', st:'ok', vend:'Ubiquiti', mdl:'U6-Lite', fw:'6.6.55',
+   snmp:'v2c', src:'ICMP + LLDP (kt. sw-bdg-acc-01)', ev:[['15:02','12 klien aktif']]},
+  {id:'srv-dns-01', nm:'srv-dns-01', ty:'Server jaringan', ip:'10.20.5.5', site:'Jakarta', lat:0.7, loss:0,
+   ifu:1, ift:1, up:'204 hari', st:'ok', vend:'Linux', mdl:'BIND 9.18', fw:'—',
+   snmp:'v2c', src:'ICMP + SNMP', ev:[['20:00','14.820 kueri terjawab, 0 gagal']]},
+  {id:'srv-syslog-01', nm:'srv-syslog-01', ty:'Server jaringan', ip:'10.20.5.6', site:'Jakarta', lat:0.6, loss:0,
+   ifu:1, ift:1, up:'204 hari', st:'ok', vend:'Linux', mdl:'rsyslog 8.2308', fw:'—',
+   snmp:'v2c', src:'ICMP + SNMP', ev:[['20:42','2.104 pesan syslog masuk hari ini']]}
+];
+
+const DISCOVERED_NEW = [
+  {ip:'10.20.1.64', mac:'48:8F:5A:xx:xx:11', why:'Menjawab ICMP + HTTP 80. Vendor dari OUI: TP-Link. SNMP tidak menjawab.', guess:'Access Point (kandidat)'},
+  {ip:'10.20.1.71', mac:'B8:27:EB:xx:xx:07', why:'Menjawab ICMP + SSH 22. Vendor dari OUI: Raspberry Pi Foundation. SNMP tidak menjawab.', guess:'Host / perangkat kecil'},
+  {ip:'10.20.4.9',  mac:'00:1B:21:xx:xx:44', why:'Menjawab ICMP + SNMP tapi community salah. Vendor dari OUI: Intel.', guess:'Server / host'},
+  {ip:'10.40.1.55', mac:'5C:5B:35:xx:xx:88', why:'Hanya menjawab ARP (tabel MAC sw-bdg-acc-01). Tidak ada port yang menjawab.', guess:'Belum diketahui'},
+  {ip:'10.20.3.18', mac:'AC:84:C6:xx:xx:2A', why:'Menjawab ICMP + port 8291 (Winbox). Vendor: MikroTik. SNMP v2c tidak aktif.', guess:'Router (kandidat)'},
+  {ip:'10.20.6.30', mac:'D4:CA:6D:xx:xx:03', why:'Menjawab ICMP + 443. Vendor dari OUI: Routerboard. SNMP timeout.', guess:'Perangkat jaringan (kandidat)'}
+];
+
+const SCAN = [
+  ['t','[00:00]','sweep ICMP 10.20.0.0/22 → 1.014 alamat diuji, paralel 64'],
+  ['k','[00:03]','144 host merespons (14,2%)'],
+  ['k','[00:04]','SNMP GET sysDescr/sysObjectID pada 144 host → 138 berhasil dijawab'],
+  ['k','[00:05]','klasifikasi: 3 Router · 21 Switch · 2 Firewall · 12 Access Point · 100 host lain'],
+  ['k','[00:06]','tabel MAC sw-jkt-core-01 dibaca → 612 MAC · 0 perangkat jaringan baru'],
+  ['k','[00:06]','LLDP/CDP ditelusuri → 144 relasi tetangga → peta koneksi diperbarui'],
+  ['w','[00:07]','6 host menjawab tapi SNMP belum bisa dibaca → masuk antrean "perlu kredensial"'],
+  ['k','[00:08]','syslog & SNMP trap dari 2 jam terakhir dicocokkan → 1 perangkat tambahan teridentifikasi'],
+  ['ok','[00:08]','selesai: 138 perangkat diperbarui · 6 menunggu kredensial · 0 duplikat'],
+];
+
+const RAIL = [
+  {id:'perangkat', ic:'▤', tx:'Perangkat', n:'15'},
+  {id:'penemuan',  ic:'⌖', tx:'Penemuan',  n:'6'},
+  {id:'peta',      ic:'◈', tx:'Peta Koneksi'}
+];
+
+let S = {view:'perangkat', sel:'sw-jkt-acc-02', q:'', ty:'Semua', site:'Semua',
+         scan:null, scanTimer:null, added:{}, node:'sw-jkt-core-01'};
+
+function toast(msg){ const t=$('#toast'); $('#toastmsg').textContent=msg; t.classList.add('on');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2800); }
+const dev = id => DEVICES.find(d=>d.id===id);
+function stWord(d){ return d.st==='down' ? 'Tidak merespons' : d.st==='warn' ? 'Perlu perhatian' : 'Normal'; }
+
+/* ---------------- views ---------------- */
+function vPerangkat(){
+  const sites = ['Semua', ...new Set(DEVICES.map(d=>d.site))];
+  const types = ['Semua', 'Router', 'Switch', 'Firewall', 'Access Point', 'Server jaringan', 'Host'];
+  const f = DEVICES.filter(d =>
+    (S.ty==='Semua' || d.ty===S.ty) &&
+    (S.site==='Semua' || d.site===S.site) &&
+    (!S.q || (d.nm+d.ip+d.site+d.ty).toLowerCase().includes(S.q.toLowerCase())));
+
+  const trouble = f.filter(d=>d.st!=='ok');
+  const healthy = f.filter(d=>d.st==='ok');
+  const total = DEVICES.length;
+  const nDown = DEVICES.filter(d=>d.st==='down').length;
+  const nWarn = DEVICES.filter(d=>d.st==='warn').length;
+  const need = nDown + nWarn;
+  const reasons = DEVICES.filter(d=>d.st!=='ok').map(d=>{
+    if(d.fresh) return d.nm+' baru ditambahkan, menunggu data pertama';
+    if(d.st==='down') return d.nm+' ('+d.site+') diam sejak '+(d.since||'—')+', terakhir terlihat '+(d.last||'—');
+    return d.nm+' kehilangan '+d.loss.toFixed(1).replace('.',',')+'% paket; CRC error naik di port uplink';
+  });
+
+  const row = d => '<tr data-dev="'+d.id+'" class="'+(S.sel===d.id?'on':'')+'">'+
+    '<td><div class="dev"><span class="dotst '+d.st+'"></span><div><div class="nm">'+d.nm+'</div>'+
+      '<div class="ty">'+d.ty+'</div></div></div></td>'+
+    '<td class="num">'+d.ip+'</td><td>'+d.site+'</td>'+
+    '<td class="num">'+(d.lat===null?'—':d.lat.toFixed(1)+' ms')+'</td>'+
+    '<td class="num">'+(d.loss===null?'—':d.loss.toFixed(1)+' %')+'</td>'+
+    '<td class="num">'+d.ifu+'/'+d.ift+'</td>'+
+    '<td><span class="st '+d.st+'"><span class="dotst '+d.st+'"></span>'+stWord(d)+'</span></td></tr>';
+
+  const tbl = rows => rows.length
+    ? '<table><thead><tr><th>Perangkat</th><th>Alamat IP</th><th>Lokasi</th><th>Latensi</th>'+
+      '<th>Hilang paket</th><th>Interface aktif</th><th>Status</th></tr></thead><tbody>'+
+      rows.map(row).join('')+'</tbody></table>'
+    : '<div class="card empty">Tidak ada perangkat yang cocok dengan filter ini.</div>';
+
+  return '<div class="verdict"><div><div class="vmain">'+
+      (need===0 ? 'Semua perangkat jaringan normal.' : need+' perangkat perlu diperiksa.')+
+      '</div><div class="vsub">'+(need? reasons.join(' · ') : 'Tidak ada perangkat yang diam atau kehilangan paket saat ini.')+
+      '</div></div>'+
+      '<div class="counts">'+
+        '<div class="c ok"><b>'+(total-nDown-nWarn)+'</b><span>NORMAL</span></div>'+
+        '<div class="c warn"><b>'+nWarn+'</b><span>PERHATIAN</span></div>'+
+        '<div class="c crit"><b>'+nDown+'</b><span>DIAM</span></div>'+
+      '</div></div>'+
+
+    '<div class="tools">'+
+      '<input class="inp" id="q" placeholder="Cari nama, IP, lokasi…" value="'+esc(S.q)+'">'+
+      '<select class="inp" id="fty">'+types.map(t=>'<option'+(t===S.ty?' selected':'')+'>'+t+'</option>').join('')+'</select>'+
+      '<select class="inp" id="fsite">'+sites.map(t=>'<option'+(t===S.site?' selected':'')+'>'+t+'</option>').join('')+'</select>'+
+      '<span class="lbl">'+f.length+' dari '+total+' perangkat</span>'+
+      '<button class="btn sm" data-view="penemuan">+ Temukan perangkat baru</button>'+
+    '</div>'+
+
+    (trouble.length? '<div class="grp">PERLU PERHATIAN <span class="bar"></span></div>'+tbl(trouble) : '')+
+    '<div class="grp">NORMAL <span class="bar"></span></div>'+tbl(healthy)+
+
+    (S.sel && dev(S.sel) ? detail() : '');
+}
+
+function detail(){
+  const d = dev(S.sel);
+  const ifaces = d.st==='down'
+    ? [['ether1','uplink',0,'down'],['ether2','downlink',0,'down']]
+    : [['uplink','ke '+ (d.ty==='Switch'?'dist-01':'fw-jkt-01'), d.ty==='Switch'?0.42:0.28,'ok'],
+       ['downlink','ke perangkat bawah', 0.19,'ok']];
+  const ifHtml = ifaces.map(i=>'<div class="iface"><span class="n">'+i[0]+
+      '<i>'+i[1]+'</i></span><span class="num">'+(i[3]==='down'?'tidak aktif':Math.round(i[2]*100)+'%')+'</span>'+
+      '<span class="minibar"><i class="'+(i[3]==='down'?'down':(i[2]>0.6?'warn':''))+'" style="width:'+
+      (i[3]==='down'?100:Math.round(i[2]*100))+'%"></i></span></div>').join('');
+
+  const lat = d.st==='down' ? null :
+    [1.1,1.0,1.2,1.1,1.3,1.2,1.1,1.4,6.2,9.8,12.4,14.8];
+  const spark = lat ? (()=>{
+    const w=280,h=34,mx=Math.max(...lat),mn=Math.min(...lat),r=(mx-mn)||1;
+    const pts = lat.map((v,i)=>[i*(w/(lat.length-1)), h-3-((v-mn)/r)*(h-8)]);
+    const dd = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    return '<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="width:100%;height:34px">'+
+      '<path d="'+dd+'" style="fill:none;stroke:var(--warn);stroke-width:1.7"/></svg>';
+  })() : '<div class="note" style="margin:0">Tidak ada data latensi — perangkat diam sejak 20:29 WIB.</div>';
+
+  return '<div class="split">'+
+    '<div class="card"><div class="ct">RINGKASAN PERANGKAT INI</div><div class="pane">'+
+      '<h3>'+d.nm+'</h3><div class="sub">'+d.ty+' · '+d.ip+' · '+d.site+'</div>'+
+      '<div class="kv">'+
+        '<span>Status</span><span class="st '+d.st+'" style="display:inline">'+stWord(d)+'</span>'+
+        '<span>Merek / model</span><span>'+d.vend+' '+d.mdl+'</span>'+
+        '<span>Firmware</span><span>'+d.fw+'</span>'+
+        '<span>Uptime</span><span>'+d.up+'</span>'+
+        '<span>Ditemukan lewat</span><span>'+d.src+'</span>'+
+        '<span>Cara dibaca</span><span>SNMP '+d.snmp+' (read-only)</span>'+
+      '</div>'+
+      '<div class="sec"><div class="h">LATENSI 24 JAM</div>'+spark+
+        '<div class="kv" style="margin-top:9px"><span>Sekarang</span><span>'+
+        (d.lat===null?'—':d.lat.toFixed(1)+' ms')+'</span><span>Hilang paket</span><span>'+
+        (d.loss===null?'—':d.loss.toFixed(1)+' %')+'</span></div>'+
+        (d.st==='warn'?'<div class="note"><b>Catatan</b>Latensi naik dari 1,1 ms ke 14,8 ms sejak 19:58 dan diikuti CRC error pada port uplink. Pola ini biasanya masalah kabel atau SFP, bukan beban trafik.</div>':'')+
+      '</div>'+
+      '<div class="sec"><div class="h">INTERFACE</div>'+ifHtml+'</div>'+
+      '<div class="sec"><div class="h">KEJADIAN TERAKHIR</div>'+
+        d.ev.map(e=>'<div class="evline"><b>'+e[0]+'</b><span>'+e[1]+'</span></div>').join('')+'</div>'+
+      '<div class="acts"><button class="btn pri" data-act="check" data-id="'+d.id+'">Cek sekarang</button>'+
+        '<button class="btn" data-act="mute" data-id="'+d.id+'">Senyapkan 1 jam</button>'+
+        '<button class="btn" data-act="map">Lihat di peta →</button></div>'+
+    '</div></div>'+
+    '<div class="card"><div class="ct">CARA PERANGKAT INI TERDETEKSI</div><div class="pane" style="font-size:12.5px;color:var(--ink-dim);line-height:1.7">'+
+      '<div class="note" style="margin:0 0 12px"><b>'+d.src+'</b>'+
+      (d.ty==='Switch' ? 'Switch ditemukan dari tabel MAC/LDP tetangganya — jadi muncul di daftar tanpa harus dipindai satu per satu.' :
+       d.ty==='Router' ? 'Router ditemukan dari jawaban ICMP di alamat gateway, lalu diidentifikasi lewat SNMP sysDescr (merek, model, firmware).' :
+       d.ty==='Access Point' ? 'Access point ditemukan sebagai tetangga LLDP pada switch akses tempat ia tersambung.' :
+       d.ty==='Firewall' ? 'Firewall ditemukan pada jalur keluar; sysDescr memberi merek dan versi firmware.' :
+       'Server jaringan ditemukan dari jawaban ICMP dan SNMP, lalu dikelompokkan sebagai layanan jaringan.')+
+      '</div>'+
+      '<div class="kv"><span>Diverifikasi</span><span>'+(d.st==='down'?'3 siklus gagal berturut-turut':'3 siklus berhasil')+'</span>'+
+        '<span>Frekuensi</span><span>ICMP 10 s · SNMP 60 s</span>'+
+        '<span>Status SNMP</span><span>'+(d.snmp==='v3'?'v3 · auth+priv':d.snmp==='v2c'?'v2c · read-only':'belum ada kredensial')+'</span></div>'+
+    '</div></div></div>';
+}
+
+function vPenemuan(){
+  const run = S.scan;
+  const lines = run ? run.lines.map(l=>'<span class="t">'+l[1]+'</span> <span class="'+l[0]+'">'+esc(l[2])+'</span>').join('\n')
+                    : '<span class="t">Atur rentang lalu tekan "Mulai penemuan" — hasil muncul di sini.</span>';
+  const pct = run ? Math.round(run.lines.length/SCAN.length*100) : 0;
+
+  const found = DISCOVERED_NEW.map((f,i)=>{
+    const st = S.added[f.ip];
+    return '<div class="r"><div><div class="mono">'+f.ip+' <span style="color:var(--ink-mute)">·</span> '+f.mac+'</div>'+
+      '<div class="why">'+f.why+'</div>'+
+      '<div class="why" style="color:var(--ink-dim)">Dugaan: '+f.guess+'</div></div>'+
+      '<div style="display:flex;gap:7px;align-items:start">'+
+        '<span class="pill">'+(st==='add'?'ditambahkan':st==='skip'?'diabaikan':'keyakinan '+[62,55,70,38,58,64][i]+'%')+'</span>'+
+        (st?'':'<button class="btn sm" data-add="'+f.ip+'">Tambahkan</button>'+
+              '<button class="btn sm" data-skip="'+f.ip+'">Abaikan</button>')+
+      '</div></div>';
+  }).join('');
+
+  return '<div class="disc">'+
+    '<div class="card"><div class="ct">PENEMUAN PERANGKAT</div><div class="pane">'+
+      '<div class="field"><label>RENTANG ALAMAT (CIDR)</label>'+
+        '<input class="inp" id="range" value="10.20.0.0/22"></div>'+
+      '<div class="field"><label>LOKASI</label><input class="inp" id="site" value="Jakarta"></div>'+
+      '<div class="field"><label>KREDENSIAL SNMP (READ-ONLY)</label>'+
+        '<input class="inp" type="password" id="snmp" value="••••••••ro">'+
+        '<div class="dd">Dipakai hanya untuk membaca sysDescr dan daftar interface.</div></div>'+
+      '<div class="field"><label>METODE YANG DIPAKAI</label>'+
+        [['ICMP sweep','Menemukan perangkat yang hidup — dasar dari semuanya.',1],
+         ['SNMP v2c / v3','Identifikasi merek, model, firmware, dan daftar interface.',1],
+         ['Tabel MAC switch','Menemukan perangkat yang tidak menjawab ping (lewat ARP switch).',1],
+         ['LLDP / CDP','Membaca siapa tersambung ke port mana — sumber peta koneksi.',1],
+         ['DHCP lease','Melihat perangkat yang meminta alamat, termasuk yang baru.',0],
+         ['Syslog & SNMP trap','Perangkat yang melapor sendiri tanpa dipindai.',0]]
+        .map(m=>'<label class="chk"><input type="checkbox" '+(m[2]?'checked':'')+'>'+
+          '<span><span class="t">'+m[0]+'</span><span class="d">'+m[1]+'</span></span></label>').join('')+
+      '</div>'+
+      '<button class="btn pri" data-act="scan" style="width:100%;justify-content:center">Mulai penemuan</button>'+
+      '<div class="note"><b>Batas jujur</b>Perangkat yang memblokir ICMP, mematikan SNMP, dan tidak terdengar di DHCP hanya akan muncul sebagai alamat di tabel MAC switch — tanpa nama. Untuk itu kredensial SNMP atau syslog sangat membantu.</div>'+
+    '</div></div>'+
+
+    '<div>'+
+      '<div class="term" style="margin-bottom:16px"><div class="th"><span>penemuan perangkat</span>'+
+        '<span id="scanst" style="margin-left:auto">'+(run?(run.done?'SELESAI':'BERJALAN'):'SIAP')+'</span></div>'+
+        '<pre id="scanpre">'+lines+'</pre>'+
+        '<div style="height:2px;background:#18202a;border-radius:2px;margin-top:9px;overflow:hidden">'+
+        '<i id="scanbar" style="display:block;height:100%;background:var(--accent);width:'+pct+'%;transition:width .35s"></i></div></div>'+
+
+      '<div class="card" style="margin-bottom:16px"><div class="ct">MENUNGGU KREDENSIAL / KONFIRMASI ('+DISCOVERED_NEW.length+')</div>'+
+        '<div class="pane found">'+found+'</div></div>'+
+
+      '<div class="card"><div class="ct">BAGAIMANA PERANGKAT DITEMUKAN</div><div class="pane how">'+
+        [['1','Jawaban langsung (aktif)','Ping dan SNMP ke rentang alamat Anda. Ini yang menemukan bagian terbesar perangkat, dan sekaligus memberi nama serta tipe perangkat.','Tidak melihat perangkat yang memblokir ICMP atau mematikan SNMP.'],
+         ['2','Melapor sendiri (pasif)','Perangkat mengirim syslog atau SNMP trap ke server monitor. Cocok untuk perangkat yang tidak boleh dipindai.','Hanya muncul setelah ada kejadian, bukan seketika.'],
+         ['3','Tabel MAC switch','Switch menyimpan daftar alamat perangkat yang pernah lewat. Menemukan perangkat yang diam terhadap ping.','Hanya memberi alamat dan MAC, tanpa nama merek.'],
+         ['4','LLDP / CDP','Perangkat jaringan mengumumkan tetangganya. Ini yang membuat peta koneksi akurat tanpa menebak.','Perlu diaktifkan pada perangkat; tidak jalan di perangkat lama.'],
+         ['5','DHCP lease','Server DHCP memberi daftar perangkat yang meminta alamat, termasuk yang baru masuk.','Perangkat dengan alamat statis tidak terlihat di sini.']]
+        .map(h=>'<div class="r"><span class="k">'+h[0]+'</span><div><b>'+h[1]+'</b>'+
+          '<div class="d">'+h[2]+'</div><div class="lim">Batasan: '+h[3]+'</div></div></div>').join('')+
+      '</div></div>'+
+    '</div></div>';
+}
+
+const MAP_NODES = [
+  {id:'internet', x:80, y:210, t1:'Internet', t2:'upstream', st:'ok'},
+  {id:'fw-jkt-01', x:250, y:210, t1:'fw-jkt-01', t2:'Firewall · 10.20.0.2', st:'ok'},
+  {id:'sw-jkt-core-01', x:430, y:210, t1:'sw-jkt-core-01', t2:'Core switch · 24/24', st:'ok'},
+  {id:'sw-jkt-dist-01', x:630, y:90, t1:'sw-jkt-dist-01', t2:'Distribusi · 12/12', st:'ok'},
+  {id:'sw-jkt-acc-01', x:830, y:40, t1:'sw-jkt-acc-01', t2:'Akses · 22/24', st:'ok'},
+  {id:'sw-jkt-acc-02', x:830, y:120, t1:'sw-jkt-acc-02', t2:'Akses · hilang 2,4%', st:'warn'},
+  {id:'sw-jkt-acc-03', x:830, y:200, t1:'sw-jkt-acc-03', t2:'Akses · 18/24', st:'ok'},
+  {id:'ap-jkt', x:1030, y:130, t1:'12 access point', t2:'Lt 2 & Lt 3 · Jakarta', st:'ok'},
+  {id:'rt-branch-bdg', x:630, y:300, t1:'rt-branch-bdg', t2:'Router cabang · diam 12 m', st:'down'},
+  {id:'sw-bdg-acc-01', x:830, y:300, t1:'sw-bdg-acc-01', t2:'Akses · 11/24', st:'ok'},
+  {id:'ap-bdg', x:1030, y:300, t1:'4 access point', t2:'Bandung', st:'ok'},
+  {id:'srv-dns-01', x:630, y:390, t1:'srv-dns-01', t2:'DNS · 10.20.5.5', st:'ok'},
+  {id:'srv-syslog-01', x:630, y:460, t1:'srv-syslog-01', t2:'Syslog · 10.20.5.6', st:'ok'}
+];
+const MAP_LINKS = [['internet','fw-jkt-01','1 Gbps'],['fw-jkt-01','sw-jkt-core-01','10 Gbps'],
+  ['sw-jkt-core-01','sw-jkt-dist-01','10 Gbps'],['sw-jkt-core-01','rt-branch-bdg','100 Mbps'],
+  ['sw-jkt-core-01','srv-dns-01','1 Gbps'],['sw-jkt-core-01','srv-syslog-01','1 Gbps'],
+  ['sw-jkt-dist-01','sw-jkt-acc-01','1 Gbps'],['sw-jkt-dist-01','sw-jkt-acc-02','1 Gbps'],
+  ['sw-jkt-dist-01','sw-jkt-acc-03','1 Gbps'],
+  ['sw-jkt-acc-01','ap-jkt','1 Gbps'],['sw-jkt-acc-02','ap-jkt','1 Gbps'],['sw-jkt-acc-03','ap-jkt','1 Gbps'],
+  ['rt-branch-bdg','sw-bdg-acc-01','1 Gbps'],['sw-bdg-acc-01','ap-bdg','1 Gbps']];
+
+function vPeta(){
+  const nm = {}; MAP_NODES.forEach(n=>nm[n.id]=n);
+  const links = MAP_LINKS.map(l=>{
+    const a=nm[l[0]], b=nm[l[1]];
+    const on = (l[0]===S.node || l[1]===S.node);
+    const down = (a.st==='down'||b.st==='down');
+    const x1=a.x+72, y1=a.y-16, x2=b.x-72, y2=b.y-16;
+    const mx=(x1+x2)/2;
+    return '<path class="lk'+(on?' on':'')+(down?' down':'')+'" d="M'+x1+' '+y1+' C '+mx+' '+y1+' '+mx+' '+y2+' '+x2+' '+y2+'"/>'+
+      (on?'<text class="lklabel" x="'+((x1+x2)/2)+'" y="'+(((y1+y2)/2)-14)+'" text-anchor="middle">'+l[2]+'</text>':'');
+  }).join('');
+  const nodes = MAP_NODES.map(n=>{
+    const cls='n'+(S.node===n.id?' on':'')+(n.st==='warn'?' warn':'')+(n.st==='down'?' down':'');
+    return '<g class="'+cls+'" data-node="'+n.id+'" role="button" tabindex="0" aria-label="'+n.t1+'">'+
+      '<title>'+n.t1+'</title>'+
+      '<rect x="'+(n.x-72)+'" y="'+(n.y-30)+'" width="144" height="44" rx="8"/>'+
+      '<circle class="dot" cx="'+(n.x-60)+'" cy="'+(n.y-16)+'" r="3.5"/>'+
+      '<text class="t1" x="'+(n.x-50)+'" y="'+(n.y-12)+'">'+n.t1+'</text>'+
+      '<text class="t2" x="'+(n.x-60)+'" y="'+(n.y+6)+'">'+n.t2+'</text></g>';
+  }).join('');
+  const sel = nm[S.node] || MAP_NODES[2];
+  const neigh = MAP_LINKS.filter(l=>l[0]===S.node||l[1]===S.node)
+    .map(l=>{ const o = l[0]===S.node?l[1]:l[0]; return {o:o, sp:l[2], st:(nm[o].st||'ok')}; });
+
+  return '<div class="mapwrap">'+
+    '<div class="card"><div class="ct">PETA KONEKSI — sumber: LLDP/CDP + tabel MAC switch</div>'+
+      '<div class="pane" style="padding:10px"><svg class="map" viewBox="0 0 1140 520">'+links+nodes+'</svg></div>'+
+      '<div class="legend">'+
+        '<i><span class="d"></span> normal</i><i><span class="d warn"></span> perlu perhatian</i>'+
+        '<i><span class="d crit"></span> tidak merespons</i>'+
+        '<i>garis putus-putus = tautan ke perangkat yang diam</i>'+
+        '<i>klik simpul untuk melihat tautannya</i>'+
+      '</div></div>'+
+    '<div class="card"><div class="ct">SIMPUL TERPILIH</div><div class="pane">'+
+      '<h3>'+sel.t1+'</h3><div class="sub">'+sel.t2+'</div>'+
+      '<div class="sec" style="margin-top:0;border-top:none;padding-top:0"><div class="h">TAUTAN ('+neigh.length+')</div>'+
+        (neigh.length? neigh.map(n=>'<div class="evline"><b>'+n.sp+'</b><span>'+n.o+
+          (n.st==='down'?' <span class="st crit">diam</span>':n.st==='warn'?' <span class="st warn">perlu perhatian</span>':'')+
+          '</span></div>').join('') : '<div class="note" style="margin:0">Simpul ini adalah titik akhir — tidak punya tautan ke perangkat jaringan lain.</div>')+
+      '</div>'+
+      (dev(sel.t1)? '<div class="acts"><button class="btn pri" data-open="'+sel.t1+'">Lihat detail perangkat →</button></div>'
+        : '<div class="note" style="margin-top:14px"><b>Grup</b>Beberapa perangkat digabung jadi satu simpul agar peta tetap terbaca. Buka daftar Perangkat untuk melihat satuannya.</div>')+
+    '</div></div></div>';
+}
+
+/* ---------------- render ---------------- */
+function renderRail(){
+  $('#rail').innerHTML = RAIL.map(n=>'<button class="'+(S.view===n.id?'on':'')+'" data-view="'+n.id+'">'+
+    '<span class="ic">'+n.ic+'</span><span class="tx">'+n.tx+'</span><span class="n">'+
+    (n.id==='perangkat'?DEVICES.length:(n.n||''))+'</span></button>').join('')+
+    '<div class="rule">Yang dipantau tahap ini hanya perangkat jaringan: router, switch, firewall, access point, dan server jaringan.</div>'+
+    '<div class="rule" style="border:none;padding-top:0;margin-top:0">Server aplikasi, container, dan security belum masuk.</div>';
+}
+function render(){
+  renderRail();
+  $('#view').innerHTML = {perangkat:vPerangkat, penemuan:vPenemuan, peta:vPeta}[S.view]();
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-view],[data-dev],[data-node],[data-add],[data-skip],[data-act],[data-open]');
+  if(!t) return;
+  const d = t.dataset;
+  if(d.view){ S.view=d.view; render(); return; }
+  if(d.dev){ S.sel=d.dev; render(); return; }
+  if(d.node){ S.node=d.node; render(); return; }
+  if(d.open){ S.sel=d.open; S.view='perangkat'; render(); toast('Detail '+d.open+' dibuka.'); return; }
+  if(d.add){
+    if(!S.added[d.add]){
+      const info = DISCOVERED_NEW.find(x=>x.ip===d.add) || {guess:'Belum diketahui', mac:'—'};
+      const guessTy = {'Access Point (kandidat)':'Access Point','Host / perangkat kecil':'Host','Server / host':'Host',
+                       'Belum diketahui':'Host','Router (kandidat)':'Router','Perangkat jaringan (kandidat)':'Switch'};
+      const pre = {'Router':'rt','Switch':'sw','Access Point':'ap','Host':'host'};
+      const ty = guessTy[info.guess] || 'Host';
+      const oct = String(d.add).split('.').slice(-2).join('-');
+      S.added[d.add] = 'add';
+      DEVICES.push({id:d.add, nm:pre[ty]+'-baru-'+oct, ty:ty, ip:d.add, site:'Jakarta', lat:null, loss:null,
+        ifu:0, ift:1, up:'—', st:'warn', fresh:true, vend:'Belum diketahui', mdl:'—', fw:'—', snmp:'none',
+        src:'penemuan: ICMP/ARP, MAC '+info.mac, ev:[['sekarang','Ditambahkan dari hasil penemuan — menunggu polling pertama']]});
+      render();
+      toast(d.add+' ditambahkan sebagai '+pre[ty]+'-baru-'+oct+' (status: menunggu data pertama).');
+    }
+    return;
+  }
+  if(d.skip){ S.added[d.skip]='skip'; render(); toast(d.skip+' diabaikan — tidak akan ditanyakan lagi.'); return; }
+  if(d.act==='check'){ toast('Pemeriksaan ulang dijalankan untuk '+d.id+' (ping + SNMP).'); return; }
+  if(d.act==='mute'){ toast('Peringatan '+d.id+' disenyapkan 1 jam.'); return; }
+  if(d.act==='map'){ S.view='peta'; render(); return; }
+  if(d.act==='scan'){ runScan(); return; }
+});
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const t = e.target.closest && e.target.closest('[data-node],[data-dev]');
+  if(!t) return; e.preventDefault(); t.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+});
+document.addEventListener('input', e=>{
+  if(e.target.id==='q'){ S.q=e.target.value; const p=e.target.selectionStart; render();
+    const el=$('#q'); if(el){ el.focus(); el.setSelectionRange(p,p); } }
+});
+document.addEventListener('change', e=>{
+  if(e.target.id==='fty'){ S.ty=e.target.value; render(); }
+  if(e.target.id==='fsite'){ S.site=e.target.value; render(); }
+});
+
+function runScan(){
+  if(S.scanTimer){ clearInterval(S.scanTimer); S.scanTimer=null; }
+  S.scan = {lines:[SCAN[0]], done:false};
+  render();
+  let i=1;
+  S.scanTimer = setInterval(()=>{
+    if(i>=SCAN.length){
+      clearInterval(S.scanTimer); S.scanTimer=null; S.scan.done=true; render();
+      toast('Penemuan selesai: 138 perangkat diperbarui, 6 menunggu kredensial.'); return;
+    }
+    S.scan.lines.push(SCAN[i]);
+    const pre=$('#scanpre'), bar=$('#scanbar'), st=$('#scanst');
+    if(pre){
+      pre.innerHTML = S.scan.lines.map(l=>'<span class="t">'+l[1]+'</span> <span class="'+l[0]+'">'+esc(l[2])+'</span>').join('\n');
+      pre.scrollTop = pre.scrollHeight;
+      if(bar) bar.style.width = Math.round(S.scan.lines.length/SCAN.length*100)+'%';
+      if(st) st.textContent='BERJALAN';
+    } else { render(); }
+    i++;
+  }, 480);
+}
+
+function clock(){
+  const f = new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,
+    timeZone:'Asia/Jakarta'}).format(new Date());
+  const el=$('#clock'); if(el) el.textContent=f+' WIB';
+}
+setInterval(clock,1000); clock();
+const savedT = store.get('mi-theme'); if(savedT) document.documentElement.dataset.theme = savedT;
+render();
+</script>
+</body>
+</html>

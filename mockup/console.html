@@ -1,0 +1,1181 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MonitorInfra Console — mockup</title>
+<style>
+  :root{
+    --bg:#0b0e12; --surface:#10151c; --surface-2:#151c25; --surface-3:#1a2330;
+    --line:#202b37; --line-soft:#171f29;
+    --ink:#e9eef5; --ink-dim:#98a7b7; --ink-mute:#66768a;
+    --accent:#17b8a6; --accent-ink:#04211d;
+    --ok:#3ddc97; --warn:#f2b544; --crit:#ef6b6b; --info:#5aa9f5; --neutral:#7e8ea1;
+    --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --r:8px;
+  }
+  html[data-theme="light"]{
+    --bg:#f5f7f9; --surface:#fff; --surface-2:#f1f4f7; --surface-3:#e9eef3;
+    --line:#dde4eb; --line-soft:#eaeff4; --ink:#111823; --ink-dim:#4a5766; --ink-mute:#7b8798;
+    --accent:#0f8f81; --accent-ink:#fff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;
+       -webkit-font-smoothing:antialiased;overflow:hidden}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#26313d;border-radius:9px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-track{background:transparent}
+  html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#c8d2dc}
+
+  /* ============ TOP ============ */
+  .top{height:52px;display:flex;align-items:center;gap:16px;padding:0 14px;
+       border-bottom:1px solid var(--line);background:var(--surface)}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:600;letter-spacing:-.01em;font-size:15px}
+  .brand .sq{width:10px;height:10px;border-radius:2px;background:var(--accent)}
+  .brand small{font-family:var(--mono);font-size:10px;color:var(--ink-mute);letter-spacing:.08em;
+               border-left:1px solid var(--line);padding-left:9px;margin-left:2px}
+  .modes{display:flex;gap:3px;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:3px}
+  .modes button{font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:5px 10px;border-radius:5px;
+                color:var(--ink-mute);transition:.12s}
+  .modes button:hover{color:var(--ink)}
+  .modes button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+  .grow{flex:1}
+  .chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-dim);
+        border:1px solid var(--line);border-radius:5px;padding:4px 8px;display:flex;align-items:center;gap:7px}
+  .chip .live{width:6px;height:6px;border-radius:50%;background:var(--ok);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .who{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--ink-dim)}
+  .who .av{width:26px;height:26px;border-radius:6px;background:var(--surface-3);border:1px solid var(--line);
+           display:grid;place-items:center;font-family:var(--mono);font-size:10.5px;color:var(--ink-dim)}
+
+  /* ============ PIPELINE ============ */
+  .pipe{height:38px;display:flex;align-items:center;gap:0;padding:0 14px;border-bottom:1px solid var(--line);
+        background:var(--surface-2);overflow-x:auto}
+  .step{display:flex;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+        color:var(--ink-mute);white-space:nowrap}
+  .step b{font-weight:500;padding:4px 9px;border-radius:4px;border:1px solid transparent}
+  .step.done b{color:var(--ink-dim);border-color:var(--line)}
+  .step.now b{color:var(--accent-ink);background:var(--accent);border-color:var(--accent);font-weight:600}
+  .step .arw{color:#2b3742;padding:0 3px}
+  html[data-theme="light"] .step .arw{color:#c4ced8}
+  .pipe .meta{margin-left:auto;padding-left:20px;font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);white-space:nowrap}
+
+  /* ============ SHELL ============ */
+  .shell{display:grid;grid-template-columns:196px 1fr;height:calc(100vh - 90px)}
+  .rail{border-right:1px solid var(--line);background:var(--surface);padding:10px 8px;overflow-y:auto}
+  .rail .lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:#4d5b6b;padding:12px 8px 6px}
+  .rail button{width:100%;display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;font-size:13px;
+               color:var(--ink-dim);text-align:left}
+  .rail button:hover{background:var(--surface-2);color:var(--ink)}
+  .rail button.on{background:var(--surface-3);color:var(--ink);font-weight:500}
+  .rail button.on .ic{color:var(--accent)}
+  .rail .ic{width:15px;font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+  .rail .badge{margin-left:auto;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:20px;
+               background:color-mix(in oklab,var(--crit) 22%,transparent);color:var(--crit)}
+  .rail .badge.w{background:color-mix(in oklab,var(--warn) 20%,transparent);color:var(--warn)}
+  main{overflow-y:auto;padding:16px 18px 40px}
+  .vhead{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+  .vhead h2{font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .vhead p{font-size:12.5px;color:var(--ink-mute)}
+  .vhead .right{margin-left:auto;display:flex;gap:7px}
+
+  /* ============ PRIMITIVES ============ */
+  .btn{font-size:12.5px;padding:6px 11px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);
+       color:var(--ink-dim);font-weight:500;transition:.12s}
+  .btn:hover{border-color:color-mix(in oklab,var(--accent) 55%,var(--line));color:var(--ink)}
+  .btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+  .btn.pri:hover{background:#19c9b5;color:var(--accent-ink)}
+  .btn.danger{border-color:color-mix(in oklab,var(--crit) 45%,var(--line));color:var(--crit)}
+  .btn.sm{font-size:11.5px;padding:4px 9px;font-family:var(--mono)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+  .card .ct{display:flex;align-items:center;gap:9px;padding:10px 13px;border-bottom:1px solid var(--line-soft);
+            font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;color:var(--ink-mute)}
+  .card .ct .rt{margin-left:auto;letter-spacing:0;font-size:10.5px}
+  .grid{display:grid;gap:13px}
+  .sev{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;padding:2px 6px;border-radius:4px;
+       border:1px solid currentColor;white-space:nowrap}
+  .sev.crit{color:var(--crit)} .sev.warn{color:var(--warn)} .sev.info{color:var(--info)} .sev.ok{color:var(--ok)}
+  .mono{font-family:var(--mono);font-size:11.5px}
+  .dim{color:var(--ink-dim)} .mute{color:var(--ink-mute)}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(158px,1fr));gap:10px;margin-bottom:13px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px;cursor:pointer;
+       text-align:left;transition:.12s;position:relative;overflow:hidden}
+  .kpi:hover{border-color:color-mix(in oklab,var(--accent) 45%,var(--line))}
+  .kpi.open{border-color:var(--accent)}
+  .kpi .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-mute);text-transform:uppercase}
+  .kpi .val{font-family:var(--mono);font-size:21px;font-weight:500;margin-top:5px;letter-spacing:-.02em}
+  .kpi .val small{font-size:12px;color:var(--ink-mute);font-weight:400}
+  .kpi .sub{font-size:11.5px;color:var(--ink-mute);margin-top:3px}
+  .kpi .sub.up{color:var(--crit)} .kpi .sub.dn{color:var(--ok)}
+  .kpi .expl{font-size:12.5px;color:var(--ink-dim);margin-top:10px;padding-top:9px;border-top:1px solid var(--line-soft);
+             line-height:1.55}
+
+  /* sparkline */
+  .spark{height:26px;margin-top:7px;display:block;width:100%}
+
+  /* feed */
+  .feed{display:flex;flex-direction:column}
+  .ev{display:grid;grid-template-columns:64px 92px 1fr auto;gap:11px;align-items:start;padding:9px 13px;
+      border-bottom:1px solid var(--line-soft);cursor:pointer;width:100%;text-align:left}
+  .ev:last-child{border-bottom:none}
+  .ev:hover{background:var(--surface-2)}
+  .ev .t{font-family:var(--mono);font-size:11px;color:var(--ink-mute);padding-top:1px}
+  .ev .txt{font-size:13px;color:var(--ink-dim)}
+  .ev .txt b{color:var(--ink);font-weight:500}
+  .ev .src{font-family:var(--mono);font-size:10px;color:var(--ink-mute);border:1px solid var(--line);
+           padding:1px 5px;border-radius:4px;white-space:nowrap}
+
+  /* correlation layout */
+  .split{display:grid;grid-template-columns:minmax(320px,1fr) minmax(420px,1.35fr);gap:13px;align-items:start}
+  .list .it{display:grid;grid-template-columns:1fr auto;gap:10px;padding:10px 13px;border-bottom:1px solid var(--line-soft);
+            cursor:pointer;text-align:left;width:100%}
+  .list .it:last-child{border-bottom:none}
+  .list .it:hover{background:var(--surface-2)}
+  .list .it.on{background:var(--surface-3);box-shadow:inset 2px 0 0 var(--accent)}
+  .list .it .ttl{font-size:13.5px;font-weight:500}
+  .list .it .meta{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-top:4px;display:flex;gap:10px}
+  .list .it .right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .score{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  .pane{padding:14px}
+  .pane h3{font-size:15px;font-weight:600;letter-spacing:-.01em;margin-bottom:3px}
+  .pane .sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-bottom:13px}
+  .blocks{display:flex;flex-direction:column;gap:13px}
+  .blk{border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2)}
+  .blk .bh{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-mute);padding:8px 12px;
+           border-bottom:1px solid var(--line-soft);text-transform:uppercase}
+  .blk .bb{padding:11px 12px}
+  .why{font-size:13.5px;color:var(--ink);line-height:1.6}
+  .why em{font-style:normal;color:var(--accent);font-family:var(--mono);font-size:12.5px}
+  .chain{display:flex;flex-direction:column;gap:0}
+  .ch{display:grid;grid-template-columns:20px 1fr;gap:10px;position:relative}
+  .ch .dot2{width:8px;height:8px;border-radius:50%;background:var(--info);margin:6px 0 0 6px;z-index:1}
+  .ch.sec .dot2{background:var(--crit)} .ch.net .dot2{background:var(--info)} .ch.sys .dot2{background:var(--warn)}
+  .ch:not(:last-child)::before{content:'';position:absolute;left:9.5px;top:14px;bottom:-6px;width:1px;background:var(--line)}
+  .ch .cb{padding-bottom:11px}
+  .ch .cb .hd{font-size:12.5px;font-weight:500}
+  .ch .cb .bd{font-family:var(--mono);font-size:11.5px;color:var(--ink-dim);margin-top:2px}
+  .evid{display:flex;flex-direction:column;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim)}
+  .evid .r{display:grid;grid-template-columns:74px 1fr;gap:10px;padding:5px 7px;background:var(--bg);border-radius:5px}
+  .evid .r span:first-child{color:var(--ink-mute)}
+  .reco{border:1px solid color-mix(in oklab,var(--accent) 40%,var(--line));background:color-mix(in oklab,var(--accent) 7%,var(--surface))}
+  .reco .bb{font-size:13px;color:var(--ink);line-height:1.6}
+  .reco ol{margin:9px 0 0 16px;font-size:12.5px;color:var(--ink-dim)}
+  .reco ol li{margin-bottom:3px}
+  .acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .statenote{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-mute)}
+  .blast{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .blast .b{font-family:var(--mono);font-size:11px;padding:3px 7px;border-radius:5px;border:1px solid var(--line);
+            color:var(--ink-dim);background:var(--bg)}
+  .blast .b.hi{border-color:color-mix(in oklab,var(--crit) 45%,var(--line));color:var(--crit)}
+
+  /* topology */
+  .topo{display:grid;grid-template-columns:1fr 320px;gap:13px;align-items:start}
+  svg.graph{width:100%;height:auto;display:block}
+  .gnode{cursor:pointer}
+  .gnode rect{fill:var(--surface-2);stroke:var(--line);stroke-width:1.2;transition:.12s}
+  .gnode text{fill:var(--ink-dim);font-size:11px;font-family:var(--mono)}
+  .gnode text.ty{fill:var(--ink-mute);font-size:9px}
+  .gnode:hover rect{stroke:var(--accent)}
+  .gnode.on rect{fill:color-mix(in oklab,var(--accent) 16%,var(--surface-2));stroke:var(--accent)}
+  .gnode.blast rect{fill:color-mix(in oklab,var(--warn) 13%,var(--surface-2));stroke:color-mix(in oklab,var(--warn) 55%,var(--line))}
+  .gedge{stroke:#25313e;stroke-width:1.3;fill:none}
+  html[data-theme="light"] .gedge{stroke:#ccd6e0}
+  .gedge.hot{stroke:var(--accent);stroke-width:2}
+  .gnode .st{fill:var(--ok)}
+  .gnode.warn .st{fill:var(--warn)} .gnode.crit .st{fill:var(--crit)}
+
+  /* playbooks */
+  .pb{display:grid;grid-template-columns:300px 1fr;gap:13px;align-items:start}
+  .pbrow{display:grid;grid-template-columns:1fr auto;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-soft);
+         width:100%;text-align:left;cursor:pointer;align-items:center}
+  .pbrow:last-child{border-bottom:none}
+  .pbrow:hover{background:var(--surface-2)}
+  .pbrow.on{background:var(--surface-3);box-shadow:inset 2px 0 0 var(--accent)}
+  .pbrow .nm{font-family:var(--mono);font-size:12px;color:var(--accent)}
+  .pbrow .ds{font-size:11.5px;color:var(--ink-mute);margin-top:2px}
+  .grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:#4d5b6b;padding:9px 12px 5px;
+       border-bottom:1px solid var(--line-soft);background:var(--bg)}
+  .term{background:#080b0f;border:1px solid var(--line);border-radius:var(--r);padding:12px 13px;overflow:hidden}
+  html[data-theme="light"] .term{background:#0d1218}
+  .term .th{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:#7c8b9c;
+            margin-bottom:9px;padding-bottom:8px;border-bottom:1px solid #18202a}
+  .term .th .b{color:#e9eef5}
+  .term pre{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#c6d2de;white-space:pre-wrap;
+            word-break:break-word;max-height:270px;overflow-y:auto}
+  .term pre .t{color:#5c6b7d} .term pre .cmd{color:#3ddc97} .term pre .k{color:#5aa9f5}
+  .term pre .w{color:#f2b544} .term pre .c{color:#ef6b6b} .term pre .ok{color:#3ddc97;font-weight:600}
+  .bar2{height:2px;background:#18202a;border-radius:2px;overflow:hidden;margin-top:9px}
+  .bar2 i{display:block;height:100%;background:var(--accent);width:0;transition:width .35s}
+
+  /* agents */
+  .agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:13px}
+  .agent{padding:13px}
+  .agent .hd{display:flex;align-items:center;gap:9px}
+  .agent .hd b{font-size:14px;font-weight:600}
+  .agent .now{font-family:var(--mono);font-size:11px;color:var(--ink-dim);background:var(--bg);border:1px solid var(--line);
+              border-radius:5px;padding:7px 9px;margin-top:11px;line-height:1.6}
+  .agent .now u{text-decoration:none;color:var(--accent)}
+  .tools{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .tools span{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);border:1px solid var(--line);
+              border-radius:4px;padding:1px 6px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-family:var(--mono);font-size:11.5px;color:var(--ink-dim)}
+  .kv span:nth-child(odd){color:var(--ink-mute)}
+
+  /* remediation table */
+  .rt{width:100%;border-collapse:collapse;font-size:12.5px}
+  .rt th{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--ink-mute);text-transform:uppercase;
+         text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  .rt td{padding:10px 12px;border-bottom:1px solid var(--line-soft);color:var(--ink-dim);vertical-align:middle}
+  .rt tr:hover td{background:var(--surface-2)}
+  .flow{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .flow span{font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;padding:2px 6px;border-radius:4px;
+             border:1px solid var(--line);color:var(--ink-mute)}
+  .flow span.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+
+  /* intelligence */
+  .intel{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:11px}
+  .f{padding:11px 12px}
+  .f b{font-family:var(--mono);font-size:12px;font-weight:500;display:block;color:var(--ink)}
+  .f .n{font-family:var(--mono);font-size:10.5px;color:var(--ink-mute);margin-top:3px}
+  .f p{font-size:12px;color:var(--ink-dim);margin-top:7px}
+  .chainviz{display:flex;align-items:center;gap:0;flex-wrap:wrap;padding:4px 0}
+  .chainviz .n2{font-family:var(--mono);font-size:11px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;
+                background:var(--surface-2);color:var(--ink-dim)}
+  .chainviz .n2.hi{border-color:var(--accent);color:var(--accent)}
+  .chainviz .a2{color:#2b3742;padding:0 7px;font-size:12px}
+  html[data-theme="light"] .chainviz .a2{color:#c4ced8}
+
+  /* toast */
+  .toast{position:fixed;right:18px;bottom:18px;background:var(--surface);border:1px solid var(--accent);
+         border-radius:8px;padding:11px 14px;font-size:12.5px;color:var(--ink);max-width:340px;z-index:60;
+         box-shadow:0 12px 34px rgba(0,0,0,.45);opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+  .toast.on{opacity:1;transform:none}
+  .toast b{color:var(--accent);font-family:var(--mono);font-size:11.5px;display:block;margin-bottom:3px}
+  @media(max-width:1020px){ .split,.topo,.pb{grid-template-columns:1fr} .shell{grid-template-columns:60px 1fr}
+    .rail button span.tx{display:none} }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="top">
+  <div class="brand"><span class="sq"></span> MonitorInfra <small>CONSOLE 0.1</small></div>
+  <div class="modes" id="modes"></div>
+  <div class="grow"></div>
+  <span class="chip"><span class="live"></span> LIVE · PROD-DC-JKT</span>
+  <span class="chip" id="clock">--:--:-- WIB</span>
+  <div class="who"><span class="av">NS</span><span>noc-shift-2</span></div>
+</div>
+
+<div class="pipe" id="pipe"></div>
+
+<div class="shell">
+  <nav class="rail" id="rail"></nav>
+  <main id="view"></main>
+</div>
+
+<div class="toast" id="toast"><b>OK</b><span id="toastmsg"></span></div>
+
+<script>
+/* ==================================================================
+   MonitorInfra console mockup — data contoh
+   ================================================================== */
+const $ = s => document.querySelector(s);
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const STAGES = ['OBSERVE','DISCOVER','DETECT','CORRELATE','DIAGNOSE','RECOMMEND','APPROVE','REMEDIATE','VERIFY'];
+const MODES = ['AUTO','NOC','SECURITY','INCIDENT','CAPACITY','CHANGE','AUDIT'];
+const MODE_INFO = {
+  AUTO:     {note:'Mode adaptif — menyesuaikan diri dengan kondisi aktif.'},
+  NOC:      {note:'Fokus availability, latency, packet loss, dan kesehatan device.'},
+  SECURITY: {note:'Fokus anomali, vulnerability, autentikasi, dan keamanan jaringan.'},
+  INCIDENT: {note:'Fokus timeline, root cause, aset terdampak, dan bukti.'},
+  CAPACITY: {note:'Fokus tren dan prakiraan kapasitas 30 hari.'},
+  CHANGE:   {note:'Fokus dampak perubahan sebelum dan sesudah eksekusi.'},
+  AUDIT:    {note:'Fokus jejak keputusan: siapa menyetujui apa, atas dasar bukti mana.'}
+};
+const NAV = [
+  {g:'OPERASI'}, {id:'overview', ic:'▤', tx:'Overview'},
+  {id:'correlation', ic:'⇄', tx:'Korelasi & Insiden', badge:'3'},
+  {id:'topology', ic:'◈', tx:'Topologi & Dependensi'},
+  {id:'agents', ic:'◎', tx:'Agent Team'},
+  {g:'PLAYBOOK'}, {id:'playbooks', ic:'⌘', tx:'Katalog Playbook'},
+  {id:'remediation', ic:'⚙', tx:'Remediasi', badge:'2', bw:true},
+  {g:'KONTEKS'}, {id:'intelligence', ic:'❖', tx:'Intelligence Layer'},
+  {id:'audit', ic:'☰', tx:'Audit & Jejak'},
+  {id:'design', ic:'◐', tx:'Design System'}
+];
+
+const AGENTS = [
+  {id:'net', name:'Network Agent', st:'ACTIVE', task:'poll SNMP 2s → sw-jkt-cr-01, rt-branch-bdg',
+   tools:['snmp','icmp','netflow','sflow','syslog','dns'], m:{'sumber':'142 device','siklus':'2 s','anomali 24j':'7','baseline':'network_baselines.json'}},
+  {id:'sys', name:'Infrastructure Agent', st:'ACTIVE', task:'range query 30d → node_cpu, node_filesystem',
+   tools:['node exporter','docker','k8s','proxmox','cloud','process'], m:{'sumber':'88 host / 214 container','siklus':'15 s','anomali 24j':'4','baseline':'metric_patterns.json'}},
+  {id:'sec', name:'Security Agent', st:'ACTIVE', task:'bandingkan hasil scan 14:00 → 12 host',
+   tools:['ids','vuln scan','config audit','auth log','tls','open port'], m:{'sumber':'12 host, 341 port','siklus':'6 jam','anomali 24j':'11','baseline':'security_patterns.json'}}
+];
+
+const KPIS = {
+  AUTO:[
+    {k:'Availability', v:'99.94', u:'%', s:'turun 0.03% vs 7d', d:'dn', e:'Diturunkan oleh degradasi jalur web tier sejak 20:37. Device lain normal.'},
+    {k:'Latency p95', v:'187', u:'ms', s:'naik 112 ms', d:'up', e:'Kenaikan terkonsentrasi di web-01 → api-01, sejalan dengan lonjakan koneksi 443.'},
+    {k:'Packet loss', v:'2.4', u:'%', s:'ambang 0.5%', d:'up', e:'Terukur pada 200 paket ICMP ke web-01; hulu (fw, lb) bersih.'},
+    {k:'Insiden aktif', v:'3', u:'', s:'1 kritis', d:'up', e:'INC-2091 (kritis), INC-2090 (warning), INC-2089 (warning).'},
+    {k:'Paparan CVE', v:'12', u:'aset', s:'2 prioritas tinggi', d:'', e:'Dipetakan dari cve_asset_correlations.json, hanya aset yang benar-benar terpapar.'}
+  ],
+  NOC:[
+    {k:'Device up', v:'142', u:'/144', s:'2 unreachable', d:'up', e:'rt-branch-bdg dan sw-lantai3-02 tidak merespons SNMP > 5 menit.'},
+    {k:'Latency p95', v:'187', u:'ms', s:'naik 112 ms', d:'up', e:'Beban web tier.'},
+    {k:'Packet loss', v:'2.4', u:'%', s:'jalur web-01', d:'up', e:'Bukan pada backbone — lihat topologi.'},
+    {k:'Throughput', v:'812', u:'Mbps', s:'peak 20:41 · 68% kapasitas', d:'', e:'Sisi inbound mendominasi, tidak simetris dengan outbound.'},
+    {k:'Interface errors', v:'37', u:'', s:'Gi0/1 sw-jkt-cr-01', d:'up', e:'CRC error naik; kemungkinan masalah fisik pada uplink.'}
+  ],
+  SECURITY:[
+    {k:'Anomali trafik', v:'3', u:'pola', s:'+340% koneksi 443', d:'up', e:'Dibandingkan baseline 7 hari pada jam yang sama.'},
+    {k:'Failed auth', v:'1.284', u:'', s:'22 menit · 1 IP', d:'up', e:'SSH password auth masih aktif di rt-branch-bdg.'},
+    {k:'Port terbuka baru', v:'2', u:'', s:'1 service tidak terdaftar', d:'up', e:'Port 9210 muncul di api-02 tanpa entri inventaris.'},
+    {k:'Sertifikat', v:'12', u:'hari', s:'*.internal.kantor', d:'', e:'Kadaluarsa 10 Okt 2026 — masuk queue perubahan.'},
+    {k:'CVE prioritas', v:'2', u:'kritis', s:'nginx 1.24.x', d:'up', e:'Terpapar pada web-01 dan web-02.'}
+  ],
+  INCIDENT:[
+    {k:'Insiden aktif', v:'3', u:'', s:'1 kritis', d:'up', e:'INC-2091 sedang didiagnosis.'},
+    {k:'MTTA', v:'48', u:'s', s:'target ≤ 60 s', d:'dn', e:'Dari event pertama ke diagnosis pertama.'},
+    {k:'Aset terdampak', v:'4', u:'', s:'blast radius 2 hop', d:'up', e:'web-01, web-02, api-01, api-02.'},
+    {k:'Bukti terkumpul', v:'27', u:'', s:'semua dapat dibuka', d:'', e:'Setiap temuan menyimpan keluaran mentah sumbernya.'},
+    {k:'Root cause', v:'2', u:'terbuka', s:'1 sudah pasti', d:'', e:'INC-2090 root cause pasti: retensi log Docker.'}
+  ],
+  CAPACITY:[
+    {k:'Disk pg-01', v:'91', u:'%', s:'+6% / 14 hari', d:'up', e:'Prakiraan penuh dalam 21 hari pada laju ini.'},
+    {k:'CPU p95 30d', v:'63', u:'%', s:'fluktuasi normal', d:'', e:'Puncak hanya pada jendela backup 01:00.'},
+    {k:'RAM terpakai', v:'78', u:'%', s:'stabil', d:'', e:'k8s-jkt-01 menyumbang 41% alokasi.'},
+    {k:'Bandwidth peak', v:'812', u:'Mbps', s:'68% dari 1.2 Gbps', d:'', e:'Perlu upgrade jika tren naik 12%/kuartal berlanjut.'},
+    {k:'Forecast 30d', v:'2', u:'sumber', s:'perlu penambahan', d:'up', e:'pg-01 (storage) dan k8s-jkt-01 (RAM).'}
+  ],
+  CHANGE:[
+    {k:'Menunggu approval', v:'2', u:'', s:'1 risiko tinggi', d:'up', e:'CHG-441 (rate-limit 443) dan CHG-439 (rotate log).'},
+    {k:'Dry run lulus', v:'3', u:'/4', s:'1 gagal di staging', d:'up', e:'CHG-440 gagal karena dependensi paket.'},
+    {k:'Rollback siap', v:'4', u:'', s:'semua punya jalur balik', d:'', e:'Termasuk snapshot konfigurasi firewall.'},
+    {k:'Jendela perubahan', v:'23:00', u:'WIB', s:'sisa 2 j 14 m', d:'', e:'Di luar jam sibuk; trafik 41% lebih rendah.'},
+    {k:'Perubahan 7d', v:'11', u:'', s:'0 insiden akibat perubahan', d:'dn', e:'Semua terverifikasi setelah eksekusi.'}
+  ],
+  AUDIT:[
+    {k:'Keputusan 24j', v:'9', u:'', s:'7 disetujui', d:'', e:'Semua memiliki bukti terlampir.'},
+    {k:'Ditolak', v:'2', u:'', s:'oleh operator', d:'', e:'Alasan tercatat di jejak.'},
+    {k:'Verifikasi', v:'7', u:'/7 lulus', s:'pasca-eksekusi', d:'dn', e:'Tidak ada tindakan tanpa verifikasi.'},
+    {k:'Auto-execute', v:'0', u:'', s:'kebijakan: Approval wajib', d:'', e:'Tidak ada perubahan tanpa persetujuan manusia.'},
+    {k:'Retensi bukti', v:'365', u:'hari', s:'hash tertaut', d:'', e:'Setiap bukti memiliki hash dan timestamp WIB.'}
+  ]
+};
+
+const FEED = {
+  AUTO:[
+    {t:'20:41:04', src:'netflow', sev:'crit', txt:'<b>web-01</b> menerima +340% koneksi baru ke port 443 dibanding baseline 7 hari.'},
+    {t:'20:41:02', src:'icmp', sev:'warn', txt:'<b>Packet loss 2.4%</b> pada jalur lb-jkt-01 → web-01 (200 paket).'},
+    {t:'20:40:58', src:'snmp', sev:'warn', txt:'<b>sw-jkt-cr-01</b> Gi0/1: CRC error naik 37 dalam 15 menit.'},
+    {t:'20:40:51', src:'auth log', sev:'crit', txt:'<b>1.284 kegagalan SSH</b> dari 1 IP pada rt-branch-bdg (password auth aktif).'},
+    {t:'20:39:40', src:'exporter', sev:'info', txt:'<b>pg-01</b> filesystem /var/lib/postgresql naik ke 91%.'},
+    {t:'20:38:12', src:'vuln scan', sev:'warn', txt:'<b>nginx 1.24.x</b> terpapar 2 CVE prioritas tinggi pada web-01, web-02.'}
+  ],
+  NOC:[
+    {t:'20:41:06', src:'snmp', sev:'crit', txt:'<b>rt-branch-bdg</b> tidak merespons SNMP (5 m 12 s) — status unreachable.'},
+    {t:'20:41:04', src:'snmp', sev:'warn', txt:'<b>sw-jkt-cr-01</b> Gi0/1 in 812 Mbps / out 744 Mbps — 68% kapasitas.'},
+    {t:'20:41:02', src:'icmp', sev:'warn', txt:'<b>Packet loss 2.4%</b> lb-jkt-01 → web-01.'},
+    {t:'20:40:44', src:'poller', sev:'ok', txt:'<b>142/144 device</b> sehat; backbone dan core switch normal.'},
+    {t:'20:39:10', src:'snmp', sev:'warn', txt:'<b>Interface error</b> Gi0/1 sw-jkt-cr-01 → indikasi masalah fisik uplink.'}
+  ],
+  SECURITY:[
+    {t:'20:40:51', src:'auth log', sev:'crit', txt:'<b>Brute force SSH</b> — 1.284 percobaan gagal, 22 menit, 1 sumber IP.'},
+    {t:'20:41:04', src:'netflow', sev:'crit', txt:'<b>Lonjakan koneksi 443</b> +340% dengan pola sumber tersebar (indikasi trafik tidak wajar).'},
+    {t:'20:40:12', src:'port watch', sev:'warn', txt:'<b>Port 9210</b> muncul di api-02 tanpa entri inventaris.'},
+    {t:'20:37:55', src:'config', sev:'warn', txt:'<b>PasswordAuthentication yes</b> pada sshd rt-branch-bdg.'},
+    {t:'20:35:20', src:'tls', sev:'info', txt:'Sertifikat <b>*.internal.kantor</b> kadaluarsa dalam 12 hari.'}
+  ],
+  INCIDENT:[
+    {t:'20:41:05', src:'correlator', sev:'crit', txt:'Hipotesis terbentuk: <b>degradasi jaringan</b> (skor 0.86) untuk INC-2091.'},
+    {t:'20:41:02', src:'playbook', sev:'warn', txt:'<b>/diagnose-network-latency</b> selesai dalam 3.4 s — 9 langkah, 4 temuan.'},
+    {t:'20:40:58', src:'topology', sev:'info', txt:'Blast radius dihitung: <b>4 aset</b> pada 2 hop dari web-01.'},
+    {t:'20:39:40', src:'correlator', sev:'warn', txt:'INC-2090 root cause pasti: <b>retensi log Docker 82 GB</b>.'},
+    {t:'20:38:30', src:'playbook', sev:'info', txt:'<b>/diagnose-service-down</b> menunggu approval untuk remediasi.'}
+  ],
+  CAPACITY:[
+    {t:'20:39:40', src:'forecast', sev:'crit', txt:'<b>pg-01</b> penuh dalam 21 hari pada laju +6%/14 hari.'},
+    {t:'20:36:00', src:'forecast', sev:'warn', txt:'<b>k8s-jkt-01</b> RAM diperkirakan menyentuh 90% dalam 34 hari.'},
+    {t:'20:20:11', src:'trend', sev:'ok', txt:'Bandwidth 812 Mbps — masih di bawah 85% kapasitas, belum perlu upgrade.'},
+    {t:'20:10:02', src:'trend', sev:'info', txt:'CPU p95 30 hari stabil 63%; puncak hanya jendela backup 01:00.'}
+  ],
+  CHANGE:[
+    {t:'20:33:00', src:'dry run', sev:'ok', txt:'<b>CHG-441</b> lulus dry run: rate-limit 443 di fw-jkt-01 — 0 dependensi rusak.'},
+    {t:'20:28:40', src:'dry run', sev:'warn', txt:'<b>CHG-440</b> gagal: upgrade paket akan memutus dependensi libssl.'},
+    {t:'20:15:22', src:'approval', sev:'info', txt:'<b>CHG-439</b> menunggu persetujuan — rotate log Docker di pg-01.'},
+    {t:'20:04:10', src:'impact', sev:'ok', txt:'Rollback tersedia untuk 4 perubahan terjadwal (snapshot terverifikasi).'}
+  ],
+  AUDIT:[
+    {t:'20:47:12', src:'jejak', sev:'ok', txt:'<b>noc-shift-2</b> menyetujui CHG-441 dengan 6 bukti terlampir.'},
+    {t:'20:31:08', src:'jejak', sev:'warn', txt:'<b>CHG-440 ditolak</b> — alasan: dependensi libssl berisiko.'},
+    {t:'20:12:44', src:'verifikasi', sev:'ok', txt:'Verifikasi pasca-eksekusi lulus: latency turun 41% setelah remediasi.'},
+    {t:'19:58:00', src:'kebijakan', sev:'info', txt:'Mode Approval wajib aktif: <b>0 eksekusi otomatis</b> tercatat.'}
+  ]
+};
+
+const INCIDENTS = [
+  {id:'INC-2091', sev:'crit', sevTxt:'KRITIS', title:'Latensi web-01 melonjak; dugaan degradasi jaringan',
+   asset:'web-01', mode:['AUTO','NOC','SECURITY','INCIDENT'], t:'20:37:12', dur:'6 m 42 s', score:'0.86',
+   sig:['network_anomaly','latency_rise','failed_auth','cpu_rise','new_process'],
+   impact:['web-01','web-02','api-01','api-02'],
+   why:'Peningkatan CPU terjadi 3 menit setelah lonjakan <em>inbound traffic</em> dan bersamaan dengan naiknya koneksi TCP pada port 443. Pola ini konsisten dengan <em>network_anomaly</em>, bukan <em>resource_exhaustion</em> — CPU dan RAM server tetap di bawah ambang, sedangkan packet loss dan CRC error muncul di sisi uplink.',
+   chain:[
+     {c:'net', h:'Network Agent', b:'inbound +340% pada 443 · packet loss 2.4% · CRC error naik di Gi0/1'},
+     {c:'sys', h:'Infrastructure Agent', b:'CPU web-01 18% (normal) · RAM 61% (normal) · process baru: satu worker tambahan'},
+     {c:'sec', h:'Security Agent', b:'1.284 kegagalan SSH pada segmen berbeda · pola sumber tersebar'},
+     {c:'net', h:'Correlator', b:'network_anomaly ∧ failed_auth ∧ cpu_rise → skor 0.86 (bukan resource exhaustion)'},
+     {c:'sec', h:'Incident Agent', b:'web-01 terdampak; api-01 ikut naik latensi 2 hop'}
+   ],
+   evid:[
+     ['netflow','conn.log 20:41:04 — 443 sessions +340% vs baseline 7d (sumber tersebar, 0.3% satu IP)'],
+     ['icmp','ping 200 pkts web-01 → loss 2.4%, rtt p95 187 ms (hulu fw/lb: 0.0%)'],
+     ['snmp','sw-jkt-cr-01 Gi0/1 — CRC error 37/15 m, in 812 Mbps / out 744 Mbps'],
+     ['exporter','node_cpu web-01 = 18%, node_memory = 61% (tidak ada penipisan resource)'],
+     ['auth log','1.284 failed SSH · 1 sumber IP · target rt-branch-bdg (segmen berbeda)'],
+     ['topology','jalur dependensi: lb-jkt-01 → web-01 → api-01 → pg-01 (2 hop)']
+   ],
+   reco:{title:'Rate-limit koneksi 443 + periksa uplink fisik', detail:'Batasi koneksi baru per sumber di fw-jkt-01, lalu periksa kabel/SFP Gi0/1 pada sw-jkt-cr-01 (CRC error). Jangan menambah CPU/RAM — metrik menunjukkan bukan penipisan resource.',
+     steps:['dry run: hitung dampak ACL pada lb-jkt-01 dan web tier','terapkan rate-limit sementara, TTL 30 menit','periksa fisik uplink Gi0/1 (CRC)','verifikasi: latency p95 kembali < 90 ms, packet loss < 0.5%'],
+     ops:['Apply','Dry run','Buat tiket','Ignore']},
+   pb:'/diagnose-network-latency', stage:'APPROVE'},
+  {id:'INC-2090', sev:'warn', sevTxt:'WARNING', title:'pg-01 disk /var/lib/postgresql mencapai 91%',
+   asset:'pg-01', mode:['AUTO','INCIDENT','CAPACITY'], t:'20:39:40', dur:'4 m 10 s', score:'0.94',
+   sig:['disk_growth','log_retention'],
+   impact:['pg-01','api-01','api-02'],
+   why:'Root cause sudah pasti: <em>retensi log</em> tidak dipangkas selama 41 hari. Pertumbuhan 6% per 14 hari; pada laju ini partisi penuh dalam 21 hari dan api-01/api-02 akan gagal menulis.',
+   chain:[
+     {c:'sys', h:'Infrastructure Agent', b:'filesystem /var/lib/postgresql 91% · inode 44%'},
+     {c:'sys', h:'Correlator', b:'pertumbuhan linier 0.43%/hari — bukan spike sesaat'},
+     {c:'sys', h:'Root cause', b:'log PostgreSQL 82 GB, rotation nonaktif sejak 12 Agt'}
+   ],
+   evid:[
+     ['du','/var/lib/postgresql/log = 82 GB (dari total 142 GB)'],
+     ['metric','node_filesystem_avail 14 GB, tren -0.43%/hari'],
+     ['config','log_rotation_age = 0 (nonaktif) · log_retention tidak diset'],
+     ['forecast','perkiraan penuh: 21 hari (interval keyakinan 18–25 hari)']
+   ],
+   reco:{title:'Rotasi dan pangkas log PostgreSQL', detail:'Aktifkan rotasi 1 GB / 7 hari, pangkas arsip > 30 hari, lalu tambah alert kapasitas di 85%.',
+     steps:['dry run: hitung volume yang akan dipangkas (≈64 GB)','aktifkan rotasi dan retensi','pangkas arsip > 30 hari','verifikasi: avail naik > 55 GB, replikasi pg-02 tetap sinkron'],
+     ops:['Apply','Dry run','Buat tiket','Ignore']},
+   pb:'/diagnose-disk-full', stage:'RECOMMEND'},
+  {id:'INC-2089', sev:'warn', sevTxt:'WARNING', title:'Sertifikat *.internal.kantor kadaluarsa 12 hari lagi',
+   asset:'lb-jkt-01', mode:['AUTO','SECURITY','CHANGE','AUDIT'], t:'20:35:20', dur:'8 m', score:'0.71',
+   sig:['tls_expiry','config_drift'],
+   impact:['lb-jkt-01','web-01','web-02'],
+   why:'Sertifikat akan kadaluarsa 10 Okt 2026. Bukan insiden aktif, tetapi masuk kategori <em>config_drift</em>: masa berlaku tidak lagi selaras dengan kalender pembaruan.',
+   chain:[
+     {c:'sec', h:'Security Agent', b:'TLS check: 12 hari tersisa · chain valid · tanpa OCSP staple'},
+     {c:'sec', h:'Correlator', b:'pola config_drift, bukan pemadaman layanan'}
+   ],
+   evid:[
+     ['tls','notAfter = 2026-10-10 · penerbit internal CA'],
+     ['inventaris','dipakai oleh lb-jkt-01 (SNI: 3 hostname)'],
+     ['kalender','belum ada tiket pembaruan terkait']
+   ],
+   reco:{title:'Jadwalkan pembaruan sertifikat di jendela perubahan', detail:'Perbarui sebelum 3 Okt 2026 dan verifikasi chain pada 3 hostname sebelum masuk produksi.',
+     steps:['airkan sertifikat baru dari internal CA','dry run: uji chain di staging','pasang pada lb-jkt-01','verifikasi dari 3 titik uji eksternal'],
+     ops:['Buat tiket','Jadwalkan','Ignore']},
+   pb:'/investigate-cve-exposure', stage:'RECOMMEND'},
+  {id:'INC-2088', sev:'info', sevTxt:'INFO', title:'k8s-jkt-01: container restart berulang pada 2 pod',
+   asset:'k8s-jkt-01', mode:['AUTO','INCIDENT','CAPACITY'], t:'20:22:41', dur:'20 m', score:'0.63',
+   sig:['restart_loop','memory_pressure'],
+   impact:['k8s-jkt-01'],
+   why:'Dua pod restart 7 kali dalam 20 menit. Belum berdampak ke layanan karena replika lain menahan beban, tetapi menandakan <em>memory_pressure</em> yang perlu dipantau.',
+   chain:[
+     {c:'sys', h:'Infrastructure Agent', b:'restart count 7 · OOMKilled 5 kali · limit 512 Mi'},
+     {c:'sys', h:'Correlator', b:'tren RAM naik 4%/minggu → arah memory_pressure'}
+   ],
+   evid:[
+     ['k8s','pod/ingest-2 → OOMKilled ×5, limit 512 Mi, peak 508 Mi'],
+     ['metric','node_memory 78% · alokasi k8s menyumbang 41%'],
+     ['forecast','menyentuh 90% dalam 34 hari bila tren berlanjut']
+   ],
+   reco:{title:'Naikkan limit memori + tinjau kebocoran', detail:'Naikkan limit ke 768 Mi sebagai penahan sementara, lalu telusuri pola kebocoran memori pada ingest-2.',
+     steps:['dry run: hitung alokasi total node','naikkan limit pod ingest-2','pantau 24 jam','verifikasi: 0 OOMKilled dalam 24 jam'],
+     ops:['Apply','Dry run','Buat tiket','Ignore']},
+   pb:'/diagnose-container-restart', stage:'DETECT'},
+  {id:'INC-2087', sev:'crit', sevTxt:'KRITIS', title:'Brute force SSH pada rt-branch-bdg (password auth aktif)',
+   asset:'rt-branch-bdg', mode:['AUTO','SECURITY','INCIDENT'], t:'20:40:51', dur:'2 m', score:'0.91',
+   sig:['brute_force','weak_auth','exposed_service'],
+   impact:['rt-branch-bdg'],
+   why:'1.284 kegagalan autentikasi dalam 22 menit dari satu sumber IP, dan <em>PasswordAuthentication</em> masih aktif. Belum ada login berhasil — belum ada eksploitasi, tetapi paparannya nyata.',
+   chain:[
+     {c:'sec', h:'Security Agent', b:'1.284 failed · 1 IP · interval 1.03 s (pola otomatis)'},
+     {c:'sec', h:'Correlator', b:'brute_force ∧ weak_auth → paparan tinggi, tanpa login sukses'},
+     {c:'net', h:'Network Agent', b:'sumber di luar segmen kantor, melalui jalur WAN Bandung'}
+   ],
+   evid:[
+     ['auth log','1.284 failed password · user root, admin, oracle · 0 success'],
+     ['config','sshd PasswordAuthentication yes · PermitRootLogin tanpa batas'],
+     ['netflow','sumber IP 1 alamat publik · laju stabil 1.03 s/percobaan'],
+     ['inventaris','rt-branch-bdg tanpa MFA · password bersama 4 tim']
+   ],
+   reco:{title:'Nonaktifkan autentikasi password, wajibkan kunci', detail:'Alihkan ke key-based authentication, batasi akses manajemen ke segmen kantor, lalu blokir sumber pada fw-jkt-01.',
+     steps:['dry run: pastikan semua operator sudah punya kunci publik','nonaktifkan PasswordAuthentication','batasi 22 ke segmen kantor + VPN','verifikasi: 0 percobaan lolos dari luar segmen'],
+     ops:['Apply','Dry run','Buat tiket','Ignore']},
+   pb:'/investigate-bruteforce', stage:'RECOMMEND'},
+  {id:'INC-2086', sev:'info', sevTxt:'INFO', title:'Pemindaian port dari luar terhadap fw-jkt-01',
+   asset:'fw-jkt-01', mode:['AUTO','SECURITY'], t:'19:47:03', dur:'13 m', score:'0.57',
+   sig:['port_scan','recon'],
+   impact:['fw-jkt-01'],
+   why:'Pemindaian port sistematis (1.024 port, laju konstan) terhadap alamat publik. Firewall menolak seluruh percobaan — tidak ada port baru terbuka.',
+   chain:[
+     {c:'sec', h:'Security Agent', b:'1.024 port dipindai · pola sequential · 0 port terbuka baru'},
+     {c:'net', h:'Correlator', b:'pola recon, tidak berlanjut ke eksploitasi'}
+   ],
+   evid:[
+     ['ids','deteksi scan: 1 sumber, 1.024 port, 13 menit'],
+     ['firewall','semua koneksi DROP · 0 port baru terbuka'],
+     ['inventaris','tidak ada perubahan service dalam 24 jam']
+   ],
+   reco:{title:'Tidak perlu tindakan; pantau sumber', detail:'Pola berhenti di tahap recon dan tidak berlanjut. Cukup tambahkan sumber ke watchlist 7 hari.',
+     steps:['tandai sumber ke watchlist 7 hari','bila berlanjut: blokir di fw-jkt-01'],
+     ops:['Watchlist','Blokir','Ignore']},
+   pb:'/investigate-port-scan', stage:'DETECT'}
+];
+
+const NODES = [
+  {id:'internet', x:470, y:28,  ty:'upstream', cr:false},
+  {id:'fw-jkt-01', x:470, y:100, ty:'firewall'},
+  {id:'lb-jkt-01', x:300, y:172, ty:'load balancer'},
+  {id:'sw-jkt-cr-01', x:660, y:172, ty:'core switch', warn:true},
+  {id:'web-01', x:150, y:244, ty:'web · VM pve-01', crit:true},
+  {id:'web-02', x:350, y:244, ty:'web · VM pve-01'},
+  {id:'pve-01', x:660, y:244, ty:'hypervisor'},
+  {id:'rt-branch-bdg', x:880, y:244, ty:'router · WAN', crit:true},
+  {id:'api-01', x:150, y:316, ty:'service'},
+  {id:'api-02', x:350, y:316, ty:'service'},
+  {id:'k8s-jkt-01', x:600, y:316, ty:'kubernetes'},
+  {id:'nas-01', x:800, y:316, ty:'storage'},
+  {id:'pg-01', x:210, y:388, ty:'database · primary', warn:true},
+  {id:'redis-01', x:420, y:388, ty:'cache'},
+  {id:'pg-02', x:620, y:388, ty:'database · replica'}
+];
+const EDGES = [['internet','fw-jkt-01'],['fw-jkt-01','lb-jkt-01'],['fw-jkt-01','sw-jkt-cr-01'],
+  ['lb-jkt-01','web-01'],['lb-jkt-01','web-02'],['sw-jkt-cr-01','pve-01'],['sw-jkt-cr-01','rt-branch-bdg'],
+  ['pve-01','k8s-jkt-01'],['pve-01','nas-01'],
+  ['web-01','api-01'],['web-02','api-02'],
+  ['api-01','pg-01'],['api-01','redis-01'],['api-02','pg-01'],['api-02','redis-01'],['pg-01','pg-02']];
+const ASSET_META = {
+  'web-01':{ip:'10.20.4.11', os:'Linux · nginx 1.24.x', cve:'2 CVE prioritas', up:'99.2%'},
+  'pg-01':{ip:'10.20.6.10', os:'Linux · PostgreSQL 16', cve:'0', up:'99.9%'},
+  'fw-jkt-01':{ip:'10.20.0.1', os:'Firewall · 3 segmen', cve:'0', up:'100%'},
+  'rt-branch-bdg':{ip:'10.40.0.1', os:'Router · WAN Bandung', cve:'1 konfigurasi berisiko', up:'97.4%'}
+};
+
+const PLAYBOOKS = [
+  {g:'DIAGNOSE', id:'/diagnose-network-latency', ds:'latensi antar hop, loss, dan jalur', target:'web-01', steps:[
+    ['cmd','/diagnose-network-latency target=web-01 hop=2'],
+    ['k','›'  ,'resolve asset graph (2 hop) — web-01 ← lb-jkt-01 ← fw-jkt-01'],
+    ['k','›'  ,'snmp poll snmp Gi0/1 sw-jkt-cr-01 → in 812 Mbps / out 744 Mbps'],
+    ['k','›'  ,'ping 200 pkts web-01 → loss 2.4% · rtt p95 187 ms'],
+    ['k','›'  ,'http probe https://web-01/ → p95 412 ms (baseline 96 ms)'],
+    ['w','!'  ,'anomali: CRC error Gi0/1 naik 37/15 m'],
+    ['k','✓'  ,'baseline banding 7 hari: 443 sessions +340%'],
+    ['ok','✓' ,'finding: degradasi jaringan pada uplink web tier, bukan resource exhaustion'],
+    ['ok','→' ,'recommendation: rate-limit 443 + periksa fisik Gi0/1'],],
+   finding:{h:'Degradasi jalur, bukan penipisan resource', b:'CPU web-01 berada di 18% dan RAM 61% selama gangguan. Lonjakan trafik mendahului kenaikan CPU sebesar 3 menit, dan packet loss terukur pada jalur lb → web, bukan pada server. Uplink Gi0/1 menunjukkan CRC error yang menandakan masalah fisik.', rec:'Rate-limit koneksi 443 di fw-jkt-01 (TTL 30 menit) dan periksa kabel/SFP Gi0/1.', inc:'INC-2091'}},
+  {g:'DIAGNOSE', id:'/diagnose-disk-full', ds:'penipisan disk dan pertumbuhannya', target:'pg-01', steps:[
+    ['cmd','/diagnose-disk-full target=pg-01'],
+    ['k','›','df -h → /var/lib/postgresql 91% (avail 14 GB)'],
+    ['k','›','du -sh /var/lib/postgresql/* → log = 82 GB'],
+    ['w','!','log_rotation_age = 0 · retensi tidak diset'],
+    ['k','›','tren 14 hari: +6% (0.43%/hari, linier)'],
+    ['ok','✓','root cause: retensi log tidak dipangkas sejak 12 Agt'],
+    ['ok','→','recommendation: rotasi 1 GB / 7 hari + pangkas > 30 hari'],],
+   finding:{h:'Retensi log, bukan pertumbuhan data', b:'Direktori data hanya tumbuh 0.4% per hari; 82 GB berasal dari log yang tidak pernah dipangkas. Partisi akan penuh dalam 21 hari bila dibiarkan.', rec:'Aktifkan rotasi log dan pangkas arsip > 30 hari, lalu pasang alert kapasitas 85%.', inc:'INC-2090'}},
+  {g:'DIAGNOSE', id:'/diagnose-high-cpu', ds:'pemakaian CPU abnormal pada host', target:'api-01', steps:[
+    ['cmd','/diagnose-high-cpu target=api-01'],
+    ['k','›','top process → uwsgi worker 44% (normalnya 6 worker)'],
+    ['k','›','jumlah worker naik dari 6 → 11 dalam 12 menit'],
+    ['k','›','cek inbound: koneksi dari web-01 +340%'],
+    ['ok','✓','CPU naik sebagai akibat trafik masuk, bukan penyebab'],],
+   finding:{h:'CPU sebagai gejala, bukan akar masalah', b:'Tambahan worker otomatis menyesuaikan diri dengan kenaikan trafik. Menambah CPU tidak akan menyelesaikan apa pun.', rec:'Tangani sumber trafik terlebih dahulu (lihat /diagnose-network-latency).', inc:'INC-2091'}},
+  {g:'DIAGNOSE', id:'/diagnose-service-down', ds:'layanan tidak merespons', target:'web-02', steps:[
+    ['cmd','/diagnose-service-down target=web-02'],
+    ['k','›','tcp 443 connect → ok · http 200 dalam 96 ms'],
+    ['ok','✓','layanan aktif — alarm berasal dari probe kadaluarsa 41 s lalu'],],
+   finding:{h:'False positive', b:'Probe kesehatan kehilangan satu siklus karena jaringan sedang degradasi. Layanan sendiri sehat.', rec:'Tidak ada tindakan. Tambahkan hysteresis 2 siklus pada probe.', inc:null}},
+  {g:'DIAGNOSE', id:'/diagnose-packet-loss', ds:'kehilangan paket per hop', target:'web-01', steps:[
+    ['cmd','/diagnose-packet-loss target=web-01'],
+    ['k','›','mtr 100 pkts → hop 4 (Gi0/1 sw-jkt-cr-01) loss 2.4%'],
+    ['k','›','hop 1–3 bersih (fw, lb) → terisolasi di uplink'],
+    ['ok','✓','loss terkonsentrasi pada satu antarmuka fisik'],],
+   finding:{h:'Kehilangan paket lokal pada satu uplink', b:'Semua hop hulu bersih; loss muncul tepat pada antarmuka dengan CRC error naik. Pola khas masalah fisik atau SFP.', rec:'Periksa kabel/SFP Gi0/1 sw-jkt-cr-01; pertimbangkan pindah jalur sementara.', inc:'INC-2091'}},
+  {g:'INVESTIGATE', id:'/investigate-bruteforce', ds:'pola percobaan autentikasi', target:'rt-branch-bdg', steps:[
+    ['cmd','/investigate-bruteforce target=rt-branch-bdg window=30m'],
+    ['k','›','auth log → 1.284 failed · 1 IP · interval 1.03 s'],
+    ['k','›','username diuji: root, admin, oracle, postgres'],
+    ['w','!','PasswordAuthentication yes · tanpa MFA'],
+    ['ok','✓','0 login berhasil — belum ada eksploitasi'],
+    ['ok','→','recommendation: wajibkan key-based auth + batasi segmen'],],
+   finding:{h:'Paparan tinggi, belum ada kompromi', b:'Serangan otomatis berjalan 22 menit tanpa satu pun login sukses, tetapi permukaan serangnya tetap terbuka selama password auth aktif.', rec:'Nonaktifkan PasswordAuthentication, batasi port 22 ke segmen kantor, blokir sumber di fw-jkt-01.', inc:'INC-2087'}},
+  {g:'INVESTIGATE', id:'/investigate-abnormal-traffic', ds:'penyimpangan pola trafik', target:'web-01', steps:[
+    ['cmd','/investigate-abnormal-traffic target=web-01 window=24h'],
+    ['k','›','443 sessions +340% vs baseline jam yang sama'],
+    ['k','›','distribusi sumber tersebar (0.3% tertinggi) → bukan satu sumber tunggal'],
+    ['k','›','rasio inbound/outbound 8:1 (baseline 3:1)'],
+    ['ok','✓','pola berbeda dari trafik normal tetapi tidak cocok dengan signature serangan umum'],],
+   finding:{h:'Anomali terverifikasi, penyebab belum pasti', b:'Pola menyimpang dari baseline 7 hari dan tidak simetris. Belum dapat dipastikan sumbernya dari luar atau dari integrasi internal.', rec:'Rate-limit sementara sambil menelusuri asal trafik bersama pemilik aplikasi.', inc:'INC-2091'}},
+  {g:'INVESTIGATE', id:'/investigate-new-service', ds:'layanan baru yang tidak terdaftar', target:'api-02', steps:[
+    ['cmd','/investigate-new-service window=24h'],
+    ['k','›','port 9210 terbuka di api-02 tanpa entri inventaris'],
+    ['k','›','banner: exporter internal · bukan proses asing'],
+    ['ok','✓','temuan: drift inventaris, bukan layanan berbahaya'],],
+   finding:{h:'Drift inventaris', b:'Layanan yang terbuka memang milik internal, tetapi tidak pernah dicatat. Risiko utamanya adalah auditability, bukan keamanan langsung.', rec:'Daftarkan ke inventaris atau tutup port tersebut.', inc:null}},
+  {g:'INVESTIGATE', id:'/investigate-cve-exposure', ds:'pemetaan CVE ke aset terpapar', target:'web-01, web-02', steps:[
+    ['cmd','/investigate-cve-exposure service=nginx severity=high'],
+    ['k','›','cve_asset_correlations → nginx 1.24.x pada 2 aset'],
+    ['k','›','cek jalur paparan: keduanya menerima trafik publik pada 443'],
+    ['ok','✓','2 aset benar-benar terpapar dari 12 kandidat'],],
+   finding:{h:'2 aset terpapar dari 12 kandidat', b:'Pemetaan memakai jalur paparan nyata (port terbuka + trafik masuk), bukan sekadar pencocokan versi.', rec:'Jadwalkan pembaruan nginx pada jendela perubahan terdekat.', inc:'INC-2089'}},
+  {g:'CAPACITY', id:'/capacity-forecast', ds:'prakiraan kapasitas 30 hari', target:'seluruh aset', steps:[
+    ['cmd','/capacity-forecast horizon=30d'],
+    ['k','›','model: exponential smoothing + musiman harian'],
+    ['w','!','pg-01 storage: penuh dalam 21 hari (interval 18–25)'],
+    ['w','!','k8s-jkt-01 RAM: 90% dalam 34 hari'],
+    ['ok','✓','bandwidth masih aman: 68% dari kapasitas'],],
+   finding:{h:'Dua sumber perlu penambahan', b:'Storage pg-01 dan RAM k8s-jkt-01 melampaui batas aman dalam horizon 30 hari; bandwidth tidak.', rec:'Ajukan penambahan storage pg-01 dan tinjau limit memori k8s.', inc:'INC-2090'}},
+  {g:'DIAGNOSE', id:'/diagnose-container-restart', ds:'container restart berulang', target:'k8s-jkt-01', steps:[
+    ['cmd','/diagnose-container-restart ns=ingest'],
+    ['k','›','pod/ingest-2 → 7 restart, 5 OOMKilled, limit 512 Mi'],
+    ['k','›','peak pemakaian 508 Mi → menyentuh limit'],
+    ['ok','✓','root cause: limit memori terlalu rapat'],],
+   finding:{h:'Limit memori terlalu rapat', b:'Pod berjalan di 99% limit lalu dibunuh kernel. Bukan kehabisan memori node, tetapi konfigurasi limit yang tidak sesuai beban.', rec:'Naikkan limit ke 768 Mi sebagai penahan, lalu telusuri pola kebocoran memori.', inc:'INC-2088'}},
+  {g:'DIAGNOSE', id:'/diagnose-dns-failure', ds:'kegagalan resolusi nama', target:'—', steps:[
+    ['cmd','/diagnose-dns-failure zone=internal.kantor'],
+    ['k','›','resolve 40 hostname → 40 ok'],
+    ['ok','✓','tidak ada kegagalan resolusi pada 24 jam terakhir'],],
+   finding:{h:'Tidak ada temuan', b:'Playbook selesai tanpa temuan. Ini juga hasil yang berguna: dugaan DNS dapat dieliminasi dari investigasi.', rec:'Tidak ada tindakan.', inc:null}}
+];
+
+/* ======================== STATE ======================== */
+let S = {mode:'AUTO', view:'overview', openKpi:null, inc:'INC-2091', pb:'/diagnose-network-latency',
+         run:null, runTimer:null, node:'web-01', rem:{}, togs:{}};
+
+/* ======================== HELPERS ======================== */
+function toast(msg){ const t=$('#toast'); $('#toastmsg').textContent=msg; t.classList.add('on');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+function sevClass(s){ return s==='crit'?'crit':s==='warn'?'warn':s==='ok'?'ok':'info'; }
+function feedInc(f){
+  const x = f.txt + ' ' + f.src;
+  if(/web-01|packet loss|netflow|nginx/i.test(x) && !/SSH/i.test(x)) return 'INC-2091';
+  if(/pg-01|log Docker|log PostgreSQL|disk/i.test(x)) return 'INC-2090';
+  if(/sertifikat|tls|kadaluarsa/i.test(x)) return 'INC-2089';
+  if(/ssh|password|brute/i.test(x)) return 'INC-2087';
+  if(/k8s|container|pod/i.test(x)) return 'INC-2088';
+  if(/port 9210|pemindaian|scan/i.test(x)) return 'INC-2086';
+  return null;
+}
+function spark(vals, color){
+  const w=150,h=26,mx=Math.max(...vals),mn=Math.min(...vals),r=(mx-mn)||1;
+  const pts=vals.map((v,i)=>[i*(w/(vals.length-1)), h-2-((v-mn)/r)*(h-6)]);
+  const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  const area=d+' L'+w+' '+h+' L0 '+h+' Z';
+  return '<svg class="spark" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">'+
+    '<path d="'+area+'" style="fill:'+color+';opacity:.10"/>'+
+    '<path d="'+d+'" style="fill:none;stroke:'+color+';stroke-width:1.6"/></svg>';
+}
+function stageIndex(){ return S.run && !S.run.done ? S.run.stage : (S.inc ? STAGES.indexOf(pickInc().stage) : 3); }
+function pickInc(){ return INCIDENTS.find(i=>i.id===S.inc) || INCIDENTS[0]; }
+function pickIncById(id){ return INCIDENTS.find(i=>i.id===id) || INCIDENTS[0]; }
+function sevLabel(s){ return s==='crit'?'KRITIS':s==='warn'?'WARNING':s==='ok'?'OK':'INFO'; }
+
+/* ======================== CHROME ======================== */
+function renderModes(){
+  $('#modes').innerHTML = MODES.map(m=>'<button class="'+(m===S.mode?'on':'')+'" data-mode="'+m+'">'+m+'</button>').join('');
+}
+function renderPipe(){
+  const cur = stageIndex();
+  $('#pipe').innerHTML = STAGES.map((s,i)=>{
+    const cls = i<cur?'done':i===cur?'now':'';
+    return '<span class="step '+cls+'"><b>'+s+'</b>'+(i<STAGES.length-1?'<span class="arw">→</span>':'')+'</span>';
+  }).join('') + '<span class="meta">MODE '+S.mode+' · '+MODE_INFO[S.mode].note+'</span>';
+}
+function renderRail(){
+  $('#rail').innerHTML = NAV.map(n=>{
+    if(n.g) return '<div class="lbl">'+n.g+'</div>';
+    const b = n.badge ? '<span class="badge'+(n.bw?' w':'')+'">'+n.badge+'</span>' : '';
+    return '<button class="'+(S.view===n.id?'on':'')+'" data-view="'+n.id+'"><span class="ic">'+n.ic+
+           '</span><span class="tx">'+n.tx+'</span>'+b+'</button>';
+  }).join('');
+}
+
+/* ======================== VIEWS ======================== */
+function vOverview(){
+  const kpis = KPIS[S.mode];
+  const feed = FEED[S.mode];
+  const kpiHtml = kpis.map((k,i)=>{
+    const open = S.openKpi===i;
+    const palette = {up:'var(--crit)', dn:'var(--ok)', '':'var(--info)'};
+    const series = k.d==='up' ? [12,14,13,18,22,26,31,29,38] : k.d==='dn' ? [30,29,31,26,24,22,21,20,18] : [20,22,19,24,23,25,22,26,24];
+    return '<button class="kpi'+(open?' open':'')+'" data-kpi="'+i+'"><div class="k">'+k.k+'</div>'+
+      '<div class="val">'+k.v+(k.u?' <small>'+k.u+'</small>':'')+'</div>'+
+      '<div class="sub '+(k.d||'')+'">'+k.s+'</div>'+
+      spark(series, palette[k.d||'']) +
+      (open?'<div class="expl">'+k.e+'</div>':'')+
+    '</button>';
+  }).join('');
+
+  const feedHtml = feed.map((f,i)=>{
+    const inc = feedInc(f);
+    return '<button class="ev" data-feed="'+i+'"'+(inc?' data-feedinc="'+inc+'"':'')+'>'+
+      '<span class="t">'+f.t+'</span>'+
+      '<span class="sev '+sevClass(f.sev)+'">'+sevLabel(f.sev)+'</span>'+
+      '<span class="txt">'+f.txt+'</span>'+
+      '<span class="src">'+f.src+(inc?' · '+inc:'')+'</span></button>';
+  }).join('');
+
+  return '<div class="vhead"><h2>Overview</h2><p>'+MODE_INFO[S.mode].note+'</p>'+
+    '<div class="right"><button class="btn sm" data-act="runmode">Jalankan sweep mode ini</button>'+
+    '<button class="btn sm" data-view="correlation">Lihat 3 insiden →</button></div></div>'+
+    '<div class="kpis">'+kpiHtml+'</div>'+
+    '<div class="grid" style="grid-template-columns:1.35fr 1fr;align-items:start">'+
+      '<div class="card"><div class="ct">ALIRAN KORELASI<span class="rt">'+feed.length+' peristiwa · live</span></div>'+
+      '<div class="feed">'+feedHtml+'</div></div>'+
+      '<div class="grid">'+
+        '<div class="card"><div class="ct">AGENT TEAM<span class="rt">3 / 3 aktif</span></div><div class="pane">'+
+          AGENTS.map(a=>'<div style="padding:9px 0;border-bottom:1px solid var(--line-soft)">'+
+            '<div style="display:flex;align-items:center;gap:8px"><b style="font-size:13px">'+a.name+'</b>'+
+            '<span class="sev ok" style="margin-left:auto">'+a.st+'</span></div>'+
+            '<div class="mono mute" style="margin-top:4px">'+a.task+'</div></div>').join('')+
+          '<div style="padding-top:11px"><button class="btn sm" data-view="agents">Buka agent team →</button></div>'+
+        '</div></div>'+
+        '<div class="card"><div class="ct">ANTREAN PERSETUJUAN<span class="rt">2 menunggu</span></div><div class="pane">'+
+          '<div style="display:flex;flex-direction:column;gap:11px">'+
+          '<div><div style="font-size:13px;font-weight:500">Rate-limit koneksi 443 (fw-jkt-01)</div>'+
+          '<div class="mono mute" style="margin-top:3px">INC-2091 · risiko sedang · dry run lulus</div></div>'+
+          '<div><div style="font-size:13px;font-weight:500">Rotasi log PostgreSQL (pg-01)</div>'+
+          '<div class="mono mute" style="margin-top:3px">INC-2090 · risiko rendah · 82 GB akan dipangkas</div></div>'+
+          '</div><div style="padding-top:11px"><button class="btn sm pri" data-view="remediation">Tinjau &amp; setujui →</button></div>'+
+        '</div></div>'+
+      '</div>'+
+    '</div>';
+}
+
+function vCorrelation(){
+  const list = S.mode==='AUTO' ? INCIDENTS : INCIDENTS.filter(i=>i.mode.includes(S.mode));
+  const rows = list.map(i=>{
+    const on = i.id===S.inc;
+    return '<button class="it'+(on?' on':'')+'" data-inc="'+i.id+'">'+
+      '<div><div class="ttl">'+i.title+'</div><div class="meta"><span>'+i.id+'</span><span>'+i.asset+'</span>'+
+      '<span>'+i.t+' WIB</span><span>'+i.dur+'</span></div></div>'+
+      '<div class="right"><span class="sev '+sevClass(i.sev)+'">'+i.sevTxt+'</span>'+
+      '<span class="score">skor '+i.score+'</span></div></button>';
+  }).join('');
+
+  const i = pickInc();
+  const chain = i.chain.map(c=>'<div class="ch '+c.c+'"><div class="dot2"></div><div class="cb">'+
+    '<div class="hd">'+c.h+'</div><div class="bd">'+c.b+'</div></div></div>').join('');
+  const evid = i.evid.map(e=>'<div class="r"><span>'+e[0]+'</span><span>'+esc(e[1])+'</span></div>').join('');
+  const r = i.reco;
+  const rk = S.rem[i.id] || {};
+  const opsHtml = r.ops.map(o=>{
+    const cls = o==='Apply' ? 'btn sm pri' : (o==='Ignore' ? 'btn sm' : 'btn sm');
+    const label = rk.state==='applied' && o==='Apply' ? 'Sudah diterapkan' : o;
+    const dis = (rk.state==='applied' && o==='Apply') ? ' disabled' : '';
+    return '<button class="'+cls+'" data-rem="'+i.id+'" data-op="'+o+'"'+dis+'>'+label+'</button>';
+  }).join('') + '<span class="statenote">'+(rk.note||'menunggu keputusan operator')+'</span>';
+
+  return '<div class="vhead"><h2>Korelasi &amp; Insiden</h2><p>Pilih insiden di kiri — detail langsung tampil di sini.</p>'+
+    '<div class="right"><span class="chip">mode '+S.mode+'</span><span class="chip">'+list.length+' insiden</span></div></div>'+
+    '<div class="split">'+
+      '<div class="card list">'+rows+'</div>'+
+      '<div class="card"><div class="pane">'+
+        '<h3>'+i.title+'</h3>'+
+        '<div class="sub">'+i.id+' · '+i.asset+' · dibuka '+i.t+' WIB · durasi '+i.dur+' · skor keyakinan '+i.score+'</div>'+
+        '<div class="blocks">'+
+          '<div class="blk"><div class="bh">Penjelasan AI</div><div class="bb"><div class="why">'+i.why+'</div>'+
+            '<div class="blast"><span class="mute mono">blast radius:</span>'+
+            i.impact.map((a,ix)=>'<span class="b'+(ix<2?' hi':'')+'">'+a+'</span>').join('')+'</div></div></div>'+
+          '<div class="blk"><div class="bh">Rantai korelasi lintas agen</div><div class="bb"><div class="chain">'+chain+'</div></div></div>'+
+          '<div class="blk"><div class="bh">Bukti mentah ('+i.evid.length+')</div><div class="bb"><div class="evid">'+evid+'</div></div></div>'+
+          '<div class="blk reco"><div class="bh">Rekomendasi · playbook '+i.pb+'</div><div class="bb">'+
+            '<div class="reco" style="border:none;background:none;padding:0"><b style="font-size:13.5px">'+r.title+'</b>'+
+            '<div style="margin-top:5px;color:var(--ink-dim);font-size:13px">'+r.detail+'</div>'+
+            '<ol>'+r.steps.map(s=>'<li>'+s+'</li>').join('')+'</ol></div>'+
+            '<div class="acts">'+opsHtml+'</div>'+
+          '</div></div>'+
+        '</div>'+
+      '</div></div>'+
+    '</div>';
+}
+
+function descendants(id){
+  const out=[]; const walk=n=>{ EDGES.filter(e=>e[0]===n).forEach(e=>{ if(!out.includes(e[1])){out.push(e[1]); walk(e[1]);} }); };
+  walk(id); return out;
+}
+function vTopology(){
+  const sel = S.node, bl = descendants(sel);
+  const nm = {}; NODES.forEach(n=>nm[n.id]=n);
+  const edges = EDGES.map(e=>{
+    const a=nm[e[0]], b=nm[e[1]];
+    const hot = (e[0]===sel && bl.includes(e[1]));
+    let d;
+    if (Math.abs(a.y - b.y) < 8) {           // simpul sebaris: busur di atas baris, bukan melengkung ke bawah
+      const dir = (b.x > a.x) ? 1 : -1;
+      const x1 = a.x + 62*dir, x2 = b.x - 62*dir;
+      d = 'M'+x1+' '+a.y+' C '+(x1+34*dir)+' '+(a.y-44)+' '+(x2-34*dir)+' '+(b.y-44)+' '+x2+' '+b.y;
+    } else {
+      d = 'M'+a.x+' '+(a.y+20)+' C '+a.x+' '+(a.y+50)+' '+b.x+' '+(b.y-50)+' '+b.x+' '+(b.y-20);
+    }
+    return '<path class="gedge'+(hot?' hot':'')+'" d="'+d+'"/>';
+  }).join('');
+  const nodes = NODES.map(n=>{
+    const on = n.id===sel, isB = bl.includes(n.id);
+    const cls = 'gnode'+(on?' on':'')+(isB?' blast':'')+(n.warn?' warn':'')+(n.crit?' crit':'');
+    return '<g class="'+cls+'" data-node="'+n.id+'" role="button" tabindex="0" aria-label="'+
+      n.id+' — '+n.ty+'"><title>'+n.id+' · '+n.ty+'</title>'+
+      '<rect x="'+(n.x-62)+'" y="'+(n.y-20)+'" width="124" height="40" rx="7"/>'+
+      '<circle class="st" cx="'+(n.x-52)+'" cy="'+(n.y-11)+'" r="3"/>'+
+      '<text x="'+n.x+'" y="'+(n.y-1)+'" text-anchor="middle" style="font-size:12px;fill:var(--ink)">'+n.id+'</text>'+
+      '<text class="ty" x="'+n.x+'" y="'+(n.y+12)+'" text-anchor="middle">'+n.ty+'</text></g>';
+  }).join('');
+  const meta = ASSET_META[sel] || {ip:'10.20.x.x', os:'—', cve:'—', up:'—'};
+  const rel = EDGES.filter(e=>e[0]===sel).map(e=>e[1]);
+  const dep = EDGES.filter(e=>e[1]===sel).map(e=>e[0]);
+  const relInc = INCIDENTS.filter(i=>i.asset===sel || i.impact.includes(sel));
+
+  return '<div class="vhead"><h2>Topologi &amp; Dependensi</h2><p>Klik simpul untuk melihat blast radius dan konteksnya — tanpa pindah halaman.</p>'+
+    '<div class="right"><span class="chip">'+NODES.length+' simpul · '+EDGES.length+' relasi</span></div></div>'+
+    '<div class="topo">'+
+      '<div class="card" style="padding:12px"><svg class="graph" viewBox="0 0 1000 430">'+edges+nodes+'</svg>'+
+      '<div class="mono mute" style="padding:6px 4px 0">Garis tegas = jalur dependensi aktif dari simpul terpilih. Kotak berpendar = terdampak (blast radius).</div></div>'+
+      '<div class="card pane">'+
+        '<h3>'+sel+'</h3>'+
+        '<div class="sub">'+meta.os+' · '+meta.ip+'</div>'+
+        '<div class="blocks">'+
+          '<div class="blk"><div class="bh">Ringkasan</div><div class="bb"><div class="kv">'+
+            '<span>Uptime</span><span>'+meta.up+'</span>'+
+            '<span>Paparan CVE</span><span>'+meta.cve+'</span>'+
+            '<span>Bergantung pada</span><span>'+(dep.length?dep.join(', '):'—')+'</span>'+
+            '<span>Digunakan oleh</span><span>'+(rel.length?rel.join(', '):'—')+'</span>'+
+          '</div></div></div>'+
+          '<div class="blk"><div class="bh">Blast radius ('+bl.length+' aset, 2 hop)</div><div class="bb">'+
+            (bl.length?'<div class="blast">'+bl.map((b,i)=>'<span class="b'+(i<2?' hi':'')+'">'+b+'</span>').join('')+'</div>':
+            '<div class="mute" style="font-size:12.5px">Tidak ada dependensi hilir — kegagalan berhenti di simpul ini.</div>')+
+          '</div></div>'+
+          '<div class="blk"><div class="bh">Insiden terkait</div><div class="bb">'+
+            (relInc.length? relInc.map(i=>'<div style="padding:6px 0;border-bottom:1px solid var(--line-soft)">'+
+              '<div style="display:flex;gap:8px;align-items:center"><button class="mono" data-inc="'+i.id+'" style="color:var(--accent)">'+i.id+'</button>'+
+              '<span class="sev '+sevClass(i.sev)+'" style="margin-left:auto">'+i.sevTxt+'</span></div>'+
+              '<div style="font-size:12.5px;color:var(--ink-dim);margin-top:3px">'+i.title+'</div></div>').join('')
+              : '<div class="mute" style="font-size:12.5px">Tidak ada insiden aktif pada simpul ini.</div>')+
+          '</div></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+}
+
+function vAgents(){
+  const cards = AGENTS.map(a=>'<div class="card agent">'+
+    '<div class="hd"><b>'+a.name+'</b><span class="sev ok" style="margin-left:auto">'+a.st+'</span></div>'+
+    '<div class="now">tugas kini › <u>'+a.task+'</u></div>'+
+    '<div class="tools">'+a.tools.map(t=>'<span>'+t+'</span>').join('')+'</div>'+
+    '<div class="kv" style="margin-top:12px">'+Object.keys(a.m).map(k=>'<span>'+k+'</span><span>'+a.m[k]+'</span>').join('')+'</div>'+
+  '</div>').join('');
+
+  return '<div class="vhead"><h2>Agent Team</h2><p>Tiga agen spesialis di bawah satu orchestrator. Tiap agen hanya membaca sumber datanya sendiri.</p>'+
+    '<div class="right"><button class="btn sm" data-act="agentteam">Jalankan team mode (contoh)</button></div></div>'+
+    '<div class="agrid">'+cards+'</div>'+
+    '<div class="card" style="margin-top:13px"><div class="ct">CONTOH ALUR TEAM MODE<span class="rt">insiden INC-2091</span></div><div class="pane">'+
+      '<div class="grid" style="grid-template-columns:1fr 1fr;gap:13px">'+
+        '<div class="blk"><div class="bh">Kontribusi tiap agen</div><div class="bb"><div class="chain">'+
+          pickIncById('INC-2091').chain.map(c=>'<div class="ch '+c.c+'"><div class="dot2"></div><div class="cb">'+
+            '<div class="hd">'+c.h+'</div><div class="bd">'+c.b+'</div></div></div>').join('')+
+        '</div></div></div>'+
+        '<div class="blk"><div class="bh">Kesimpulan yang bisa ditindaklanjuti</div><div class="bb">'+
+          '<div class="why">Insiden kemungkinan berasal dari <em>abnormal inbound traffic</em> pada jalur uplink, '+
+          'bukan resource exhaustion pada server. Menambah CPU/RAM tidak akan mengubah apa pun; '+
+          'tindakan yang berhasil adalah membatasi trafik masuk dan memperbaiki uplink fisik.</div>'+
+          '<div class="acts"><button class="btn sm pri" data-inc="INC-2091">Buka insiden →</button>'+
+          '<button class="btn sm" data-view="playbooks">Katalog playbook</button></div>'+
+        '</div></div>'+
+      '</div>'+
+    '</div></div>';
+}
+
+function vPlaybooks(){
+  const sel = S.pb;
+  const groups = ['DIAGNOSE','INVESTIGATE','CAPACITY'];
+  let rows = '';
+  groups.forEach(g=>{
+    rows += '<div class="grp">'+g+'</div>';
+    PLAYBOOKS.filter(p=>p.g===g).forEach(p=>{
+      rows += '<button class="pbrow'+(p.id===sel?' on':'')+'" data-pb="'+p.id+'">'+
+        '<div><div class="nm">'+p.id+'</div><div class="ds">'+p.ds+'</div></div>'+
+        '<div class="mono mute" style="font-size:10.5px">'+p.target+'</div></button>';
+    });
+  });
+  const pb = PLAYBOOKS.find(p=>p.id===sel) || PLAYBOOKS[0];
+  const run = S.run && S.run.id===pb.id ? S.run : null;
+
+  const termLines = run ? run.lines.map(l=>{
+    const cls = l[0]==='cmd'?'cmd':l[0]==='w'?'w':l[0]==='c'?'c':l[0]==='ok'?'ok':l[0]==='t'?'t':'k';
+    return '<span class="t">'+(l[2]||'')+'</span> <span class="'+cls+'">'+esc(l[1])+'</span>';
+  }).join('\n') : '<span class="t">tekan playbook di kiri untuk menjalankannya — hasil muncul di sini</span>';
+
+  const pct = run ? Math.round(run.lines.length / pb.steps.length * 100) : 0;
+  const done = run && run.done;
+
+  const out = done ? '<div class="blocks" style="margin-top:13px">'+
+    '<div class="blk"><div class="bh">Temuan</div><div class="bb"><b style="font-size:13.5px">'+pb.finding.h+'</b>'+
+      '<div style="margin-top:6px;color:var(--ink-dim);font-size:13px;line-height:1.6">'+pb.finding.b+'</div></div></div>'+
+    '<div class="blk reco"><div class="bh">Rekomendasi</div><div class="bb">'+pb.finding.rec+
+      '<div class="acts"><button class="btn sm pri" data-pbapply="'+pb.id+'">Apply</button>'+
+      '<button class="btn sm" data-pbdry="'+pb.id+'">Dry run</button>'+
+      '<button class="btn sm" data-pbticket="'+pb.id+'">Buat tiket</button>'+
+      (pb.finding.inc?'<button class="btn sm" data-inc="'+pb.finding.inc+'">Buka '+pb.finding.inc+' →</button>':'')+
+      '<span class="statenote">'+(S.togs[pb.id]||'menunggu keputusan operator')+'</span></div></div></div>'+
+  '</div>' : '';
+
+  return '<div class="vhead"><h2>Katalog Playbook</h2><p>Playbook dijalankan seketika di tempat — hasil, temuan, dan aksi muncul di panel kanan.</p>'+
+    '<div class="right"><span class="chip">'+PLAYBOOKS.length+' playbook</span><span class="chip">approval wajib</span></div></div>'+
+    '<div class="pb">'+
+      '<div class="card">'+rows+'</div>'+
+      '<div><div class="term"><div class="th"><span class="b">'+pb.id+'</span>'+
+        '<span>target: '+pb.target+'</span><span id="runst" style="margin-left:auto">'+(run? (done?'SELESAI':'BERJALAN') : 'SIAP')+'</span></div>'+
+        '<pre id="termpre">'+termLines+'</pre><div class="bar2"><i id="bar2" style="width:'+pct+'%"></i></div></div>'+out+'</div>'+
+    '</div>';
+}
+
+function vRemediation(){
+  const rows = INCIDENTS.map(i=>{
+    const rk = S.rem[i.id]||{}; const op=[];
+    const st = rk.state==='applied'?'VERIFY':(rk.state==='dry'?'APPROVE':(rk.state==='ticket'?'RECOMMEND':(rk.state==='ignored'?'—':'RECOMMEND')));
+    ['OBSERVE','CORRELATE','DIAGNOSE','RECOMMEND','APPROVE','REMEDIATE','VERIFY'].forEach(s=>{
+      const label = {OBSERVE:'observe',CORRELATE:'correlate',DIAGNOSE:'diagnose',RECOMMEND:'recommend',APPROVE:'approve',REMEDIATE:'remediate',VERIFY:'verify'}[s];
+      op.push('<span class="'+(rk.state&&s===st?'on':'')+'">'+label+'</span>');
+    });
+    return '<tr><td><span class="mono">'+i.id+'</span><div style="font-size:12px;margin-top:3px;color:var(--ink)">'+
+      i.reco.title+'</div></td><td>'+i.asset+'</td><td><span class="sev '+sevClass(i.sev)+'">'+i.sevTxt+'</span></td>'+
+      '<td><div class="flow">'+op.join('')+'</div></td>'+
+      '<td style="font-family:var(--mono);font-size:11px">'+i.pb+'</td>'+
+      '<td>'+(rk.note?'<span class="mono mute">'+rk.note+'</span>':'<button class="btn sm" data-inc="'+i.id+'">Tinjau →</button>')+'</td></tr>';
+  }).join('');
+
+  return '<div class="vhead"><h2>Remediasi</h2><p>Kebijakan: tidak ada eksekusi otomatis. Observe → Explain → Recommend → Approve → Execute → Verify.</p>'+
+    '<div class="right"><span class="chip">2 menunggu · 0 otomatis</span></div></div>'+
+    '<div class="card"><div class="ct">ANTREAN KEPUTUSAN<span class="rt">klik Tinjau → insiden dibuka di tempat</span></div>'+
+    '<table class="rt"><thead><tr><th>Insiden &amp; usulan</th><th>Aset</th><th>Tingkat</th><th>Tahap</th><th>Playbook</th><th>Status</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table></div>'+
+    '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-top:13px">'+
+      [['Wajib persetujuan manusia','Setiap perubahan konfigurasi membutuhkan approval operator. Mode auto hanya berlaku untuk observasi.'],
+       ['Dry run lebih dulu','Semua usulan punya jalur dry run — dampaknya dihitung sebelum apa pun diubah.'],
+       ['Selalu diverifikasi','Setelah eksekusi, sistem memeriksa ulang metrik yang menjadi alasan tindakan itu diambil.'],
+       ['Rollback siap','Perubahan menyimpan snapshot konfigurasi sebelumnya, termasuk pada perangkat jaringan.']]
+      .map(x=>'<div class="card pane"><b style="font-size:13px">'+x[0]+'</b>'+
+        '<div style="margin-top:6px;color:var(--ink-dim);font-size:12.5px;line-height:1.6">'+x[1]+'</div></div>').join('')+
+    '</div>';
+}
+
+const INTEL = [
+  ['asset_ontology.json','184 entri','Jenis aset, atribut, dan aturan pengelompokan.'],
+  ['service_dependencies.json','612 relasi','Siapa bergantung pada siapa — dasar blast radius.'],
+  ['port_service_map.json','341 port','Port → protokol → layanan → platform.'],
+  ['metric_patterns.json','96 pola','Pola metrik bermakna, bukan sekadar ambang batas.'],
+  ['incident_patterns.json','47 pola','Pola insiden yang pernah terjadi beserta penyebabnya.'],
+  ['security_patterns.json','124 pola','Brute force, port scan, trafik menyimpang.'],
+  ['cve_asset_correlations.json','12 aset terpapar','CVE dipetakan ke aset yang benar-benar terpapar.'],
+  ['network_baselines.json','142 garis dasar','Garis dasar per jalur, per jam, per hari.'],
+  ['remediation_playbooks.json','38 tindakan','Tindakan aman, dampaknya, dan cara verifikasinya.']
+];
+function vIntelligence(){
+  return '<div class="vhead"><h2>Intelligence Layer</h2><p>Agen membaca konteks, bukan sekadar angka. Inilah lapisan yang membuat korelasi masuk akal.</p>'+
+    '<div class="right"><span class="chip">9 berkas konteks · 1.508 entri</span></div></div>'+
+    '<div class="intel">'+INTEL.map(f=>'<div class="card f"><b>'+f[0]+'</b><div class="n">'+f[1]+'</div>'+
+      '<p>'+f[2]+'</p></div>').join('')+'</div>'+
+    '<div class="card" style="margin-top:13px"><div class="ct">CONTOH PENALARAN BERLAPIS<span class="rt">port 443</span></div><div class="pane">'+
+      '<div class="chainviz">'+
+        ['port 443','HTTPS','nginx 1.24.x','Linux','2 CVE (prioritas tinggi)','trafik diamati +340%','security event']
+          .map((n,i)=>'<span class="n2'+(i>3?' hi':'')+'">'+n+'</span>'+(i<6?'<span class="a2">→</span>':'')).join('')+
+      '</div>'+
+      '<div class="why" style="margin-top:14px;font-size:13px;color:var(--ink-dim)">'+
+        'Rantai ini yang membuat jawaban berbeda dari ambang batas biasa: port yang sama pada aset yang sama '+
+        'dibaca bersama versi layanan, platform, CVE yang relevan, dan trafik yang benar-benar teramati — '+
+        'sehingga sistem dapat memisahkan <em>aset terpapar</em> dari <em>aset yang hanya cocok versinya</em>.'+
+      '</div>'+
+    '</div></div>';
+}
+
+function vAudit(){
+  const rows = [
+    ['20:47:12','noc-shift-2','CHG-441 · rate-limit 443 fw-jkt-01','DISETUJUI','6 bukti · dry run lulus · risiko sedang'],
+    ['20:31:08','noc-shift-2','CHG-440 · upgrade paket libssl','DITOLAK','alasan: dependensi berisiko terputus'],
+    ['20:12:44','sistem','verifikasi pasca-eksekusi web-01','LULUS','latency p95 −41% · loss 0.0%'],
+    ['19:58:00','sistem','kebijakan mode approval','AKTIF','0 eksekusi otomatis tercatat'],
+    ['19:41:20','noc-shift-1','INC-2087 · wajibkan key-based auth','DITUNDA','menunggu konfirmasi pemilik jaringan']
+  ];
+  const log = FEED.AUDIT.map(f=>'<div class="ev" data-feed="0"><span class="t">'+f.t+'</span>'+
+    '<span class="sev '+sevClass(f.sev)+'">'+f.src+'</span><span class="txt">'+f.txt+'</span></div>').join('');
+  return '<div class="vhead"><h2>Audit &amp; Jejak Keputusan</h2><p>Setiap keputusan menyimpan pelakunya, buktinya, dan hasil verifikasinya.</p>'+
+    '<div class="right"><button class="btn sm" data-act="export">Ekspor jejak (CSV)</button></div></div>'+
+    '<div class="split">'+
+      '<div class="card"><div class="ct">KEPUTUSAN TERAKHIR<span class="rt">5 entri</span></div>'+
+      '<table class="rt"><tbody>'+rows.map(r=>'<tr><td class="mono" style="white-space:nowrap">'+r[0]+'</td>'+
+        '<td style="color:var(--ink)">'+r[2]+'<div class="mono mute" style="margin-top:3px;font-size:11px">'+r[1]+' · '+r[3]+'</div></td>'+
+        '<td class="mono mute" style="font-size:11px">'+r[4]+'</td></tr>').join('')+'</tbody></table></div>'+
+      '<div class="card"><div class="ct">ALIRAN JEJAK<span class="rt">24 jam</span></div><div class="feed">'+log+'</div></div>'+
+    '</div>';
+}
+
+function vDesign(){
+  const sw = [
+    ['Background','--bg','#0b0e12','latar utama'],
+    ['Surface','--surface','#10151c','kartu, panel'],
+    ['Surface 2','--surface-2','#151c25','header kartu, baris'],
+    ['Border','--line','#202b37','garis pemisah'],
+    ['Ink','--ink','#e9eef5','teks utama'],
+    ['Ink dim','--ink-dim','#98a7b7','teks sekunder'],
+    ['Accent','--accent','#17b8a6','aksi, fokus, tautan'],
+    ['OK','--ok','#3ddc97','sehat, terverifikasi'],
+    ['Warn','--warn','#f2b544','perlu perhatian'],
+    ['Crit','--crit','#ef6b6b','kritis, ditolak'],
+    ['Info','--info','#5aa9f5','netral informatif']
+  ];
+  return '<div class="vhead"><h2>Design System</h2><p>Token yang dipakai seluruh console. Dark adalah default; tema terang hanya lewat pilihan manual.</p>'+
+    '<div class="right"><button class="btn sm" id="theme">Ganti tema</button></div></div>'+
+    '<div class="split">'+
+      '<div class="card"><div class="ct">TOKEN WARNA</div><table class="rt"><tbody>'+
+        sw.map(s=>'<tr><td style="width:26px"><span style="display:inline-block;width:14px;height:14px;border-radius:3px;'+
+          'background:'+s[2]+';border:1px solid var(--line)"></span></td>'+
+          '<td style="color:var(--ink);width:120px">'+s[0]+'</td><td class="mono">'+s[1]+'</td>'+
+          '<td class="mono mute">'+s[2]+'</td><td class="mute">'+s[3]+'</td></tr>').join('')+
+      '</tbody></table></div>'+
+      '<div class="card pane"><div class="bh" style="margin-bottom:12px">ATURAN</div>'+
+        ['Dark default selalu aktif (data-theme="dark"); tema terang hanya lewat pilihan manual + localStorage, tanpa mengikuti preferensi sistem.',
+         'Aksen tunggal (teal) untuk aksi; warna status hanya dipakai untuk menyatakan keadaan, bukan dekorasi.',
+         'Tidak ada gradien, tidak ada glassmorphism, tidak ada ungu.',
+         'Tipografi: IBM Plex Sans untuk teks, IBM Plex Mono untuk angka, id, dan keluaran perintah.',
+         'Aksi (jalankan, tinjau, terapkan) tidak pernah berpindah halaman — status muncul di tempat.',
+         'Memilih item langsung memuat isinya; tidak ada tombol Muat terpisah.',
+         'Setiap angka bisa dibuka alasan di baliknya (klik kartu KPI).']
+        .map(a=>'<div style="display:flex;gap:9px;padding:7px 0;border-bottom:1px solid var(--line-soft)">'+
+          '<span style="color:var(--accent);font-family:var(--mono);font-size:11px">■</span>'+
+          '<span style="font-size:12.5px;color:var(--ink-dim);line-height:1.6">'+a+'</span></div>').join('')+
+      '</div>'+
+    '</div>';
+}
+
+/* ======================== PLAYBOOK RUNNER ======================== */
+function runPlaybook(id){
+  if(S.runTimer){ clearInterval(S.runTimer); S.runTimer=null; }
+  const pb = PLAYBOOKS.find(p=>p.id===id);
+  S.pb = id;
+  S.run = {id:id, lines:[pb.steps[0]], done:false, stage:3};
+  render();
+  let i = 1;
+  S.runTimer = setInterval(()=>{
+    if(i >= pb.steps.length){
+      clearInterval(S.runTimer); S.runTimer=null;
+      S.run.done = true;
+      S.run.stage = 6;
+      render(); toast('Playbook '+pb.id+' selesai — temuan & rekomendasi siap ditinjau.'); return;
+    }
+    S.run.lines.push(pb.steps[i]);
+    if(i===1) S.run.stage = 4;
+    if(i===pb.steps.length-1) S.run.stage = 5;
+    i++;
+    const pre = $('#termpre'), bar = $('#bar2'), st = $('#runst');
+    if(pre){
+      pre.innerHTML = S.run.lines.map(l=>{
+        const cls = l[0]==='cmd'?'cmd':l[0]==='w'?'w':l[0]==='c'?'c':l[0]==='ok'?'ok':l[0]==='t'?'t':'k';
+        return '<span class="t">'+(l[2]||'')+'</span> <span class="'+cls+'">'+esc(l[1])+'</span>';
+      }).join('\n');
+      pre.scrollTop = pre.scrollHeight;
+      if(bar) bar.style.width = Math.round(S.run.lines.length/pb.steps.length*100)+'%';
+      if(st) st.textContent = 'BERJALAN';
+      renderPipe();
+    } else { render(); }
+  }, 420);
+}
+
+/* ======================== RENDER ======================== */
+function render(){
+  // jaga konsistensi: insiden terpilih harus selalu tampil di daftar mode aktif
+  if(S.view==='correlation' && S.mode!=='AUTO'){
+    const vis = INCIDENTS.filter(i=>i.mode.includes(S.mode));
+    if(vis.length && !vis.some(i=>i.id===S.inc)) S.inc = vis[0].id;
+  }
+  renderModes(); renderPipe(); renderRail();
+  const v = {overview:vOverview, correlation:vCorrelation, topology:vTopology, agents:vAgents,
+             playbooks:vPlaybooks, remediation:vRemediation, intelligence:vIntelligence,
+             audit:vAudit, design:vDesign}[S.view] || vOverview;
+  $('#view').innerHTML = v();
+}
+
+/* ======================== EVENTS ======================== */
+document.addEventListener('click', e=>{
+  const t = e.target.closest('[data-mode],[data-view],[data-kpi],[data-inc],[data-feedinc],[data-node],[data-pb],[data-rem],[data-op],[data-act],[data-pbapply],[data-pbdry],[data-pbticket],#theme');
+  if(!t) return;
+  const d = t.dataset;
+
+  if(d.mode){ S.mode = d.mode; S.openKpi=null; render(); toast('Mode '+d.mode+' aktif — bobot korelasi dan playbook menyesuaikan.'); return; }
+  if(d.view){ S.view = d.view; render(); return; }
+  if(d.kpi!==undefined && d.kpi!==null && t.classList.contains('kpi')){ const n=+d.kpi; S.openKpi = S.openKpi===n?null:n; render(); return; }
+  if(d.feedinc){ S.inc = d.feedinc; S.view='correlation'; render(); return; }
+  if(d.feed!==undefined && !d.feedinc){ toast('Peristiwa ini belum terhubung ke insiden mana pun.'); return; }
+  if(d.inc){ S.inc = d.inc; S.view='correlation'; render(); return; }
+  if(d.node){ S.node = d.node; render(); return; }
+  if(d.pb){ runPlaybook(d.pb); return; }
+  if(t.id==='theme'){ const r=document.documentElement; r.dataset.theme = r.dataset.theme==='dark'?'light':'dark';
+    store.set('mi-theme', r.dataset.theme); toast('Tema '+r.dataset.theme+' (pilihan manual).'); return; }
+
+  if(d.op){ const inc = d.op; const id = t.dataset.rem;
+    if(inc==='Apply'){ S.rem[id] = {state:'applied', note:'diterapkan 20:52 WIB · menunggu verifikasi'};
+      toast(id+' diterapkan. Verifikasi otomatis dijalankan.'); }
+    else if(inc==='Dry run'){ S.rem[id] = {state:'dry', note:'dry run 20:52 WIB · 0 dependensi rusak'};
+      toast('Dry run '+id+': 0 dependensi rusak, dampak terhitung.'); }
+    else if(inc==='Buat tiket'||inc==='Jadwalkan'){ S.rem[id]= {state:'ticket', note:'tiket CHG-4'+(40+Math.floor(Math.random()*40))+' dibuat'};
+      toast('Tiket perubahan dibuat untuk '+id+'.'); }
+    else if(inc==='Watchlist'){ S.rem[id]={state:'ignored', note:'sumber masuk watchlist 7 hari'}; toast('Sumber masuk watchlist 7 hari.'); }
+    else if(inc==='Blokir'){ S.rem[id]={state:'applied', note:'sumber diblokir di fw-jkt-01'}; toast('Sumber diblokir di fw-jkt-01.'); }
+    else { S.rem[id]={state:'ignored', note:'diabaikan oleh operator'}; toast(id+' diabaikan. Alasan dicatat di jejak audit.'); }
+    render(); return; }
+
+  if(d.pbapply){ S.togs[d.pbapply]='diterapkan · verifikasi berjalan'; toast('Tindakan diterapkan — verifikasi berjalan di tempat.'); render(); return; }
+  if(d.pbdry){ S.togs[d.pbdry]='dry run lulus · 0 dependensi rusak'; toast('Dry run lulus.'); render(); return; }
+  if(d.pbticket){ S.togs[d.pbticket]='tiket CHG-4'+(40+Math.floor(Math.random()*40))+' dibuat'; toast('Tiket perubahan dibuat.'); render(); return; }
+
+  if(d.act==='runmode'){ toast('Sweep mode '+S.mode+' dijalankan: 144 device, 88 host, 12 host security.'); return; }
+  if(d.act==='agentteam'){ toast('Team mode: 3 agen berjalan paralel, hasil dikorelasikan.'); return; }
+  if(d.act==='export'){ toast('Jejak keputusan diekspor ke CSV (mockup).'); return; }
+});
+
+/* keyboard: simpul topologi & baris daftar dapat dioperasikan tanpa mouse */
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const t = e.target.closest && e.target.closest('[data-node],[data-inc]');
+  if(!t) return;
+  e.preventDefault();
+  t.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+});
+
+/* clock */
+function clock(){
+  const f = new Intl.DateTimeFormat('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit',
+    hour12:false,timeZone:'Asia/Jakarta'}).format(new Date());
+  const el=$('#clock'); if(el) el.textContent = f+' WIB';
+}
+setInterval(clock,1000); clock();
+
+/* init */
+const savedT = store.get('mi-theme'); if(savedT) document.documentElement.dataset.theme = savedT;
+render();
+</script>
+</body>
+</html>
